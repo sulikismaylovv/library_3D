@@ -11,6 +11,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 
+#Find PCL
+find_package(PCL 1.3 REQUIRED)
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
 # Define a variable for 3D_SYSTEM_LIBRARY
 set(3D_SYSTEM_LIBRARY TRUE)
 
@@ -18,9 +24,11 @@ add_library(3d_system SHARED
   3d_system_global.h
   pcl_3d.cpp
   pcl_3d.h
+  ply_processor.h ply_processor.cpp
+  ply_segmentation.h ply_segmentation.cpp
 )
 
-target_link_libraries(3d_system PRIVATE Qt${QT_VERSION_MAJOR}::Core)
+target_link_libraries(3d_system PRIVATE Qt${QT_VERSION_MAJOR}::Core ${PCL_LIBRARIES})
 
 # Pass the variable as a definition to the compiler
 target_compile_definitions(3d_system PRIVATE SYSTEM_3D_LIBRAR)
