@@ -1,4 +1,5 @@
 #include "ply_segmentation.h"
+#include "Eigen/src/Eigenvalues/SelfAdjointEigenSolver.h"
 #include <pcl/common/transforms.h> // Make sure this include is present
 #include <pcl/filters/passthrough.h>
 
@@ -50,7 +51,7 @@ std::vector<pcl::PointIndices> ply_segmentation::segmentAndExtractClusters(const
     search::KdTree<PointXYZ>::Ptr tree(new search::KdTree<PointXYZ>());
     tree->setInputCloud(cloud);
 
-    boost_swap_impl::vector<PointIndices> cluster_indices;
+    std::vector<PointIndices> cluster_indices;
     EuclideanClusterExtraction<PointXYZ> ec;
     // Explanation of the parameters:
     // Cluster Tolerance - the maximum distance between points that belong to the same cluster
@@ -109,6 +110,10 @@ void ply_segmentation::visualizePointCloud(const pcl::PointCloud<pcl::PointXYZ>:
     // Add the point cloud
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> originalColor(cloud, 255, 255, 255); // White color
     viewer->addPointCloud<pcl::PointXYZ>(cloud, originalColor, "cloud");
+    // Setup random number generation for colors
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, 255);
 
     // Highlight each cluster in the cloud with a unique color and add a bounding box
     int cluster_id = 0;
@@ -119,9 +124,9 @@ void ply_segmentation::visualizePointCloud(const pcl::PointCloud<pcl::PointXYZ>:
         }
 
         // Generate a random color for the cluster
-        int r = arc4random() % 256;
-        int g = arc4random() % 256;
-        int b = arc4random() % 256;
+        int r = dis(gen);
+        int g = dis(gen);
+        int b = dis(gen);
         pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> clusterColor(cluster_cloud, r, g, b);
         viewer->addPointCloud<pcl::PointXYZ>(cluster_cloud, clusterColor, "cluster" + std::to_string(cluster_id));
 
@@ -164,6 +169,41 @@ PointCloud<PointXYZ>::Ptr ply_segmentation::transformCloud(const PointCloud<Poin
     transform.translation() << -reference_point.x, -reference_point.y, -reference_point.z;
     transformPointCloud(*cloud, *cloud, transform);
     return cloud;
+}
+
+//extract locations
+void ply_segmentation::extractLocations(const PointCloud<PointXYZ>::Ptr& cloud, const std::vector<pcl::PointIndices>& cluster_indices) {
+    int cluster_id = 0;
+    for (const auto& cluster : cluster_indices) {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cluster_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+        for (const auto& idx : cluster.indices) {
+            cluster_cloud->push_back((*cloud)[idx]);
+        }
+
+        Eigen::Vector4f centroid;
+        pcl::compute3DCentroid(*cluster_cloud, centroid);
+        pcl::PointXYZ minPt, maxPt;
+        pcl::getMinMax3D(*cluster_cloud, minPt, maxPt);
+        centroid[2] = (0 + maxPt.z) / 2; // Adjust centroid Z to be midway between 0 and max Z
+        Eigen::Matrix3f covariance;
+        pcl::computeCovarianceMatrixNormalized(*cluster_cloud, centroid, covariance);
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigen_solver(covariance, Eigen::ComputeEigenvectors);
+        Eigen::Matrix3f eigen_vectors = eigen_solver.eigenvectors();
+        Eigen::Quaternionf quat(eigen_vectors);
+        minPt.z = 0; // Optional: Adjust if you want the box to start from the ground level
+
+        // Orientation is axis-aligned, so quaternion is identity
+        Eigen::Quaternionf orientation = Eigen::Quaternionf::Identity();
+
+        // Print centroid (location) and orientation (quaternion)
+        std::cout << "Bounding Box " << cluster_id << " Location (Centroid): " << centroid[0] << ", " << centroid[1] << ", " << centroid[2] << std::endl;
+        std::cout << "Orientation (Quaternion): " << orientation.x() << ", " << orientation.y() << ", " << orientation.z() << ", " << orientation.w() << std::endl;
+        std::cout << "Quaternions: " << quat.x() << " " << quat.y() << " " << quat.z() << " " << quat.w() << std::endl;
+
+        std::cout << "Bounding Box " << cluster_id << " dimensions: " << maxPt.x - minPt.x << ", " << maxPt.y - minPt.y << ", " << maxPt.z - minPt.z << std::endl;
+
+        cluster_id++;
+    }
 }
 
 

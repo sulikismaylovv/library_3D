@@ -20,6 +20,7 @@
 #include <pcl/segmentation/region_growing.h>
 
 #include <pcl/filters/radius_outlier_removal.h>
+#include <random>
 
 using namespace pcl;
 
@@ -79,6 +80,13 @@ public:
      * @return
      */
     pcl::PointCloud<pcl::PointXYZ>::Ptr subtractPointClouds(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloudA, const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloudB, float searchRadius);
+
+    /**
+     * @brief extractClusterLocation
+     * @param cloud
+     * @param cluster_indices
+     */
+    void extractLocations(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const std::vector<pcl::PointIndices>& cluster_indices);
 };
 
 #endif // PLY_SEGMENTATION_H

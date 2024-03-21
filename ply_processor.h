@@ -36,6 +36,9 @@
 //KDTree
 #include <pcl/search/kdtree.h>
 
+#include <optional>
+
+
 
 /**
  * @brief The ply_processor class provides functionalities to process point clouds.
