@@ -32,7 +32,7 @@ public:
     Eigen::VectorXf findBoundingBox(const std::string& filePathBox,
                                     const std::string& filePathTray,
                                     const Eigen::Vector3f& referencePoint,
-                                    const Eigen::Vector3f& prevLocation = Eigen::Vector3f::Zero());
+                                    const Eigen::Vector3f& prevLocation);
 
     /**
      * @brief Calibrates the tray to find the reference point based on the given height and point cloud.

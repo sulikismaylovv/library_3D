@@ -218,3 +218,34 @@ PointXYZ ply_segmentation::findReferencePoint(const PointCloud<PointXYZ>::Ptr& c
     return reference_point;
 }
 
+//function to subtract point clouds
+PointCloud<PointXYZ>::Ptr ply_segmentation::subtractPointClouds(const PointCloud<PointXYZ>::Ptr& cloudA, const PointCloud<PointXYZ>::Ptr& cloudB, float searchRadius) {
+    // KdTree for searching
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+    kdtree.setInputCloud(cloudB); // Use cloudB for searching
+
+    // Indices to keep
+    pcl::PointIndices::Ptr keepIndices(new pcl::PointIndices());
+
+    // Search for each point in cloudA within the radius in cloudB
+    std::vector<int> pointIdxRadiusSearch;
+    std::vector<float> pointRadiusSquaredDistance;
+
+    for (size_t i = 0; i < cloudA->points.size(); ++i) {
+        if (kdtree.radiusSearch(cloudA->points[i], searchRadius, pointIdxRadiusSearch, pointRadiusSquaredDistance) == 0) {
+            // If no points are found within the radius, add the index to keepIndices
+            keepIndices->indices.push_back(i);
+        }
+    }
+
+    // Extract the points based on the indices
+    pcl::ExtractIndices<pcl::PointXYZ> extract;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr result(new pcl::PointCloud<pcl::PointXYZ>);
+    extract.setInputCloud(cloudA);
+    extract.setIndices(keepIndices);
+    extract.setNegative(false); // False to keep the points in keepIndices
+    extract.filter(*result);
+
+    return result;
+}
+
