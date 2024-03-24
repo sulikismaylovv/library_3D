@@ -87,6 +87,14 @@ public:
      * @param cluster_indices
      */
     void extractLocations(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const std::vector<pcl::PointIndices>& cluster_indices);
+
+    /**
+     * @brief findReferencePoint
+     * @param cloud
+     * @return
+     */
+    PointXYZ findReferencePoint(const PointCloud<PointXYZ>::Ptr& cloud);
+
 };
 
 #endif // PLY_SEGMENTATION_H

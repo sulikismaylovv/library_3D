@@ -1,4 +1,5 @@
 #include "ply_processor.h"
+#include "pcl/filters/radius_outlier_removal.h"
 #include <pcl/io/auto_io.h>
 #include <pcl/filters/filter.h> // For removeNaNFromPointCloud
 
@@ -61,6 +62,21 @@ bool ply_processor::applyPassthroughFilter(pcl::PointCloud<pcl::PointXYZ>& cloud
     return true;
 }
 
+bool ply_processor::applyPassThroughZOnly(pcl::PointCloud<pcl::PointXYZ>& cloud, float minZ, float maxZ) {
+    if (cloud.empty() || minZ >= maxZ) return false;
+
+    pcl::PassThrough<pcl::PointXYZ> filter;
+    filter.setInputCloud(cloud.makeShared());
+    filter.setFilterFieldName("z");
+    filter.setFilterLimits(minZ, maxZ);
+
+    pcl::PointCloud<pcl::PointXYZ> filteredCloud;
+    filter.filter(filteredCloud);
+    cloud.swap(filteredCloud); // Minimize memory copy
+
+    return true;
+}
+
 bool ply_processor::applyMLSSurfaceReconstruction(pcl::PointCloud<pcl::PointXYZ>& cloud, float searchRadius) {
     if (cloud.empty() || searchRadius <= 0) return false;
 
@@ -89,5 +105,18 @@ bool ply_processor::applyStatisticalOutlierRemoval(pcl::PointCloud<pcl::PointXYZ
     sor.filter(filteredCloud);
 
     cloud.swap(filteredCloud); // Minimize memory copy
+    return true;
+}
+
+bool ply_processor::removeOutliers(pcl::PointCloud<pcl::PointXYZ>& cloud, int meanN, double radius) {
+    if (cloud.empty() || meanN <= 0 || radius <= 0) return false;
+
+    pcl::RadiusOutlierRemoval<pcl::PointXYZ> outrem;
+    outrem.setInputCloud(cloud.makeShared());
+    outrem.setRadiusSearch(radius);
+    outrem.setMinNeighborsInRadius(meanN);
+    outrem.filter(cloud);
+
+
     return true;
 }

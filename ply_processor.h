@@ -73,6 +73,16 @@ public:
     /**
      * Applies a pass-through filter to remove points outside a specified range.
      * @param cloud Cloud to modify.
+     * @param minZ Minimum Z value of the filtering box.
+     * @param maxZ Maximum Z value of the filtering box.
+     * @return True if the operation was successful, false otherwise.
+     */
+    bool applyPassThroughZOnly(pcl::PointCloud<pcl::PointXYZ>& cloud, float minZ, float maxZ);
+
+
+    /**
+     * Applies a pass-through filter to remove points outside a specified range.
+     * @param cloud Cloud to modify.
      * @param minPt Minimum point of the filtering box.
      * @param maxPt Maximum point of the filtering box.
      * @return True if the operation was successful, false otherwise.
@@ -96,6 +106,14 @@ public:
      */
     bool applyStatisticalOutlierRemoval(pcl::PointCloud<pcl::PointXYZ>& cloud, int meanK, double stddevMulThresh);
 
+    /**
+     * @brief removeOutliers
+     * @param cloud
+     * @param meanN
+     * @param radius
+     * @return
+     */
+    bool removeOutliers(pcl::PointCloud<pcl::PointXYZ>& cloud, int meanN, double radius);
 private:
          // Internal helper methods and variables can be declared here
 };

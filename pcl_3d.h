@@ -24,7 +24,8 @@ public:
      * @param prevLocation The previous location (x, y, z) of the point cloud, used for orientation purposes (optional).
      * @return Eigen::VectorXf The eigen vectors representing the orientation of the bounding box.
      */
-    Eigen::VectorXf findBoundingBox(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,
+    Eigen::VectorXf findBoundingBox(const std::string& filePathBox,
+                                    const std::string& filePathTray,
                                     const Eigen::Vector3f& referencePoint,
                                     const Eigen::Vector3f& prevLocation = Eigen::Vector3f::Zero());
 
@@ -35,7 +36,7 @@ public:
      * @param height The height at which to find the reference point.
      * @return Eigen::Vector3f The (x, y, z) coordinates of the reference point.
      */
-    Eigen::Vector3f calibrateTray(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,
+    Eigen::Vector3f calibrateTray(const std::string& filePath,
                                   float height);
 
     /**

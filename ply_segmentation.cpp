@@ -206,4 +206,15 @@ void ply_segmentation::extractLocations(const PointCloud<PointXYZ>::Ptr& cloud, 
     }
 }
 
+//find reference point
+PointXYZ ply_segmentation::findReferencePoint(const PointCloud<PointXYZ>::Ptr& cloud) {
+    //reference point is at bottom left corner of the cloud
+    pcl::PointXYZ minPt, maxPt;
+    pcl::getMinMax3D(*cloud, minPt, maxPt);
+    //adjust height
+    //minPt.z += 20;
+    // The reference point is the minimum point (bottom left)
+    pcl::PointXYZ reference_point = minPt;
+    return reference_point;
+}
 
