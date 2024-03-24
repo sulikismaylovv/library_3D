@@ -85,6 +85,8 @@ bool ply_processor::applyMLSSurfaceReconstruction(pcl::PointCloud<pcl::PointXYZ>
 
     pcl::MovingLeastSquares<pcl::PointXYZ, pcl::PointXYZ> mls;
     mls.setInputCloud(cloud.makeShared());
+    mls.setComputeNormals(true); // Set to true if you need normals
+    mls.setPolynomialOrder(2); // 2nd order polynomial
     mls.setSearchMethod(tree);
     mls.setSearchRadius(searchRadius);
     mls.process(mlsPoints);

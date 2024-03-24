@@ -25,13 +25,13 @@ Eigen::Vector3f PCL_3D::calibrateTray(const std::string& filePath, float height)
     }
 
     // Step 3: Apply Voxel Grid Filter
-    if (!processor->applyVoxelGridFilter(*cloud, 0.01f)) { // Example leaf size
+    if (!processor->applyVoxelGridFilter(*cloud, 0.5f)) { // Example leaf size
         std::cerr << "Applying Voxel Grid filter failed." << std::endl;
         throw std::runtime_error("Applying Voxel Grid filter failed.");
     }
 
     // Step 4: Apply MLS Surface Reconstruction
-    if (!processor->applyMLSSurfaceReconstruction(*cloud, 0.01f)) { // Example search radius
+    if (!processor->applyMLSSurfaceReconstruction(*cloud, 1.5f)) { // Example search radius
         std::cerr << "Applying MLS Surface Reconstruction failed." << std::endl;
         throw std::runtime_error("Applying MLS Surface Reconstruction failed.");
     }

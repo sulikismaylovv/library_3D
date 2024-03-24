@@ -14,7 +14,12 @@ public:
     /**
      * @brief Constructor for the PCL_3D class.
      */
-    PCL_3D();
+    PCL_3D()
+        : segmentation(std::make_unique<ply_segmentation>()),
+        processor(std::make_unique<ply_processor>())
+    {
+        // Empty constructor
+    }
 
     /**
      * @brief Finds the bounding box of a point cloud and returns the eigen vectors representing its orientation.
