@@ -126,7 +126,10 @@ std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
 
     // Step 7: Subtract the tray from the object
     auto isolated_pcl = segmentation->subtractPointClouds(cloud, cloudTray, 20);
-    std::cout << "Isolated pcl size: " << isolated_pcl->size() << std::endl;
+    if (isolated_pcl->size() == 0) {
+        std::cerr << "Subtracting point clouds failed.(no boxes)" << std::endl;
+        return {};
+    }
 
     // Step 8: Segment and Extract Clusters
     auto cluster_indices = segmentation->segmentAndExtractClusters(isolated_pcl);
