@@ -27,7 +27,7 @@ public:
      * @param cloud The point cloud for which the bounding box is to be found.
      * @param referencePoint The reference point (x, y, z) to be used in calculations.
      * @param prevLocation The previous location (x, y, z) of the point cloud, used for orientation purposes (optional).
-     * @return Eigen::VectorXf The eigen vectors representing the orientation of the bounding box.
+     * @return Vector of ClusterInfo objects containing the bounding box information for each cluster.
      */
     std::vector<ClusterInfo> findBoundingBox(const std::string& filePathBox,
                                     const std::string& filePathTray,

@@ -35,64 +35,66 @@ public:
     ply_segmentation() = default;
 
     /**
-     * @brief segmentAndExtractClusters
-     * @param cloud
-     * @return
+     * @brief Function to segment and extract clusters from a point cloud. The function uses Euclidean clustering to segment the cloud.
+     * @param cloud The point cloud to segment.
+     * @return A vector of point indices representing the clusters.
      */
     std::vector<pcl::PointIndices> segmentAndExtractClusters(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud);
 
     /**
-     * @brief extractLargestCluster
-     * @param cluster_indices
-     * @param cloud
-     * @return
+     * @brief Function to extract the largest cluster from a point cloud.
+     * @param cluster_indices The vector of point indices representing the clusters.
+     * @param cloud The point cloud to extract the cluster from.
+     * @return The largest cluster as a point cloud.
      */
     pcl::PointCloud<pcl::PointXYZ>::Ptr extractLargestCluster(const std::vector<pcl::PointIndices>& cluster_indices, const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud);
 
     /**
-     * @brief visualizePointCloud
-     * @param cloud
-     * @param cluster_indices
+     * @brief Function to visualize the point cloud and the extracted clusters.
+     * @param cloud The point cloud to visualize.
+     * @param cluster_indices The vector of point indices representing the clusters.
+     * @return The visualizer object.
      */
     void visualizePointCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const std::vector<pcl::PointIndices>& cluster_indices);
 
     /**
-     * @brief extractCluster
-     * @param cloud
-     * @param cluster
-     * @return
+     * @brief Function to visualize the point cloud and the extracted clusters.
+     * @param cloud The point cloud to visualize.
+     * @param clusters The vector of clusters to visualize.
+     * @return The visualizer object.
      */
     pcl::PointCloud<pcl::PointXYZ>::Ptr extractCluster(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const pcl::PointIndices& cluster);
 
 
     /**
-     * @brief transformCloud
-     * @param cloud
-     * @param reference_point
-     * @return
+     * @brief Function to transform a point cloud to align with the specified reference point.
+     * @param cloud The point cloud to transform.
+     * @param reference_point The reference point to align the cloud with.
+     * @return The transformed point cloud.
      */
     pcl::PointCloud<pcl::PointXYZ>::Ptr transformCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const pcl::PointXYZ& reference_point);
 
     /**
-     * @brief subtractPointClouds
-     * @param cloudA
-     * @param cloudB
-     * @param searchRadius
-     * @return
+     * @brief Function to subtract two point clouds. Usually cloudA is the tray which boxes and cloudB is just tray.
+     * @param cloudA The first point cloud.
+     * @param cloudB The second point cloud.
+     * @param searchRadius The search radius for the subtraction.
+     * @return The subtracted point cloud.
      */
     pcl::PointCloud<pcl::PointXYZ>::Ptr subtractPointClouds(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloudA, const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloudB, float searchRadius);
 
     /**
-     * @brief extractClusterLocation
-     * @param cloud
-     * @param cluster_indices
+     * @brief Function to extract the locations of the clusters.
+     * @param cloud The point cloud to extract the locations from.
+     * @param cluster_indices The vector of point indices representing the clusters.
+     * @return A vector of ClusterInfo objects containing the bounding box information for each cluster.
      */
     std::vector<ClusterInfo> extractLocations(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const std::vector<pcl::PointIndices>& cluster_indices);
 
     /**
-     * @brief findReferencePoint
-     * @param cloud
-     * @return
+     * @brief Function to find the reference point in the point cloud.
+     * @param cloud The point cloud to find the reference point in.
+     * @return The reference point.
      */
     PointXYZ findReferencePoint(const PointCloud<PointXYZ>::Ptr& cloud);
 

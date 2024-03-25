@@ -107,11 +107,11 @@ public:
     bool applyStatisticalOutlierRemoval(pcl::PointCloud<pcl::PointXYZ>& cloud, int meanK, double stddevMulThresh);
 
     /**
-     * @brief removeOutliers
-     * @param cloud
-     * @param meanN
-     * @param radius
-     * @return
+     * @brief Removes outliers from the point cloud.
+     * @param cloud Point cloud to remove outliers from.
+     * @param meanN Number of neighbors to consider for each point.
+     * @param radius Radius for outlier removal.
+     * @return True if the operation was successful, false otherwise.
      */
     bool removeOutliers(pcl::PointCloud<pcl::PointXYZ>& cloud, int meanN, double radius);
 private:
