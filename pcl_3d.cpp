@@ -147,4 +147,12 @@ Eigen::VectorXf PCL_3D::findBoundingBox(const std::string& filePathBox,
     return Eigen::VectorXf();
 }
 
+//function to transform point cloud to reference point
+pcl::PointCloud<pcl::PointXYZ>::Ptr PCL_3D::transformToReferencePoint(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const Eigen::Vector3f& referencePoint)
+{
+    //Convert the reference point to pcl::PointXYZ
+    pcl::PointXYZ referencePointXYZ(referencePoint.x(), referencePoint.y(), referencePoint.z());
+    return segmentation->transformCloud(cloud, referencePointXYZ);
+}
+
 
