@@ -185,6 +185,7 @@ std::vector<ClusterInfo> ply_segmentation::extractLocations(const PointCloud<Poi
         pcl::compute3DCentroid(*cluster_cloud, centroid);
         pcl::PointXYZ minPt, maxPt;
         pcl::getMinMax3D(*cluster_cloud, minPt, maxPt);
+        minPt.z = 0; // Set min Z to the origin level for visualization
 
         Eigen::Matrix3f covariance;
         pcl::computeCovarianceMatrixNormalized(*cluster_cloud, centroid, covariance);
