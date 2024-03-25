@@ -21,6 +21,7 @@
 
 #include <pcl/filters/radius_outlier_removal.h>
 #include <random>
+#include "clusters.h"
 
 using namespace pcl;
 
@@ -86,7 +87,7 @@ public:
      * @param cloud
      * @param cluster_indices
      */
-    void extractLocations(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const std::vector<pcl::PointIndices>& cluster_indices);
+    std::vector<ClusterInfo> extractLocations(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const std::vector<pcl::PointIndices>& cluster_indices);
 
     /**
      * @brief findReferencePoint

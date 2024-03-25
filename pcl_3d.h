@@ -29,7 +29,7 @@ public:
      * @param prevLocation The previous location (x, y, z) of the point cloud, used for orientation purposes (optional).
      * @return Eigen::VectorXf The eigen vectors representing the orientation of the bounding box.
      */
-    Eigen::VectorXf findBoundingBox(const std::string& filePathBox,
+    std::vector<ClusterInfo> findBoundingBox(const std::string& filePathBox,
                                     const std::string& filePathTray,
                                     const Eigen::Vector3f& referencePoint,
                                     const Eigen::Vector3f& prevLocation);

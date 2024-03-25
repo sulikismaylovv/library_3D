@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
+file(GLOB PUBLIC_HEADERS "*.h")
+
 project(3DSystem VERSION 1.0 LANGUAGES C CXX)
 
 # Set C++17 as the standard and require it
@@ -29,6 +31,7 @@ add_library(3DSystem SHARED
     ply_processor.h
     ply_segmentation.cpp
     ply_segmentation.h
+    clusters.h
 )
 
 # Specify libraries to link with target
@@ -45,14 +48,18 @@ target_include_directories(3DSystem
 set_target_properties(3DSystem PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION 1
-    PUBLIC_HEADER "pcl_3d.h"
+    PUBLIC_HEADER "${PUBLIC_HEADERS}"
 )
 
 include(GNUInstallDirs)
 
 # Install rules, if required
 # Put library in /home/suleyman/Desktop/MasterThesis/library directory and headers in include directory
+# install(TARGETS 3DSystem
+#     LIBRARY DESTINATION /home/suleyman/Desktop/MasterThesis/library/lib
+#     PUBLIC_HEADER DESTINATION /home/suleyman/Desktop/MasterThesis/library/lib/include
+# )
 install(TARGETS 3DSystem
-    LIBRARY DESTINATION /home/suleyman/Desktop/MasterThesis/library/lib
-    PUBLIC_HEADER DESTINATION /home/suleyman/Desktop/MasterThesis/library/lib/include
+    LIBRARY DESTINATION /Users/suleymanismaylov/Desktop/MasterThesis/Library/lib
+    PUBLIC_HEADER DESTINATION /Users/suleymanismaylov/Desktop/MasterThesis/Library/lib/include
 )

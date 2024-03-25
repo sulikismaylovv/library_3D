@@ -66,14 +66,13 @@ Eigen::Vector3f PCL_3D::calibrateTray(const std::string& filePath, float height)
 }
 
 //function to find objects
-Eigen::VectorXf PCL_3D::findBoundingBox(const std::string& filePathBox,
+std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
                                         const std::string& filePathTray,
                                         const Eigen::Vector3f& referencePoint,
                                         const Eigen::Vector3f& prevLocation){
 
     //Check if prev location is empty, if empty use reference point for pass through filter
     pcl::PointXYZ minPt, maxPt;
-    pcl::PointXYZ minPtTray, maxPtTray;
 
     if(prevLocation.isZero()){
         minPt = {referencePoint.x() - 10, referencePoint.y() - 10, referencePoint.z() - 10};
@@ -138,13 +137,13 @@ Eigen::VectorXf PCL_3D::findBoundingBox(const std::string& filePathBox,
     auto transformed_cloud = segmentation->transformCloud(isolated_pcl, referencePointXYZ);
 
     //Step 9: Extract locations
-    segmentation->extractLocations(transformed_cloud, cluster_indices);
+    auto info = segmentation->extractLocations(transformed_cloud, cluster_indices);
 
     // Step 10: Visualize the results
     //segmentation->visualizePointCloud(transformed_cloud, cluster_indices);
 
 
-    return Eigen::VectorXf();
+    return info;
 }
 
 //function to transform point cloud to reference point

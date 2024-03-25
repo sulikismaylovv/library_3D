@@ -172,8 +172,9 @@ PointCloud<PointXYZ>::Ptr ply_segmentation::transformCloud(const PointCloud<Poin
 }
 
 //extract locations
-void ply_segmentation::extractLocations(const PointCloud<PointXYZ>::Ptr& cloud, const std::vector<pcl::PointIndices>& cluster_indices) {
-    int cluster_id = 0;
+std::vector<ClusterInfo> ply_segmentation::extractLocations(const PointCloud<PointXYZ>::Ptr& cloud, const std::vector<pcl::PointIndices>& cluster_indices) {
+    std::vector<ClusterInfo> clusters;
+
     for (const auto& cluster : cluster_indices) {
         pcl::PointCloud<pcl::PointXYZ>::Ptr cluster_cloud(new pcl::PointCloud<pcl::PointXYZ>());
         for (const auto& idx : cluster.indices) {
@@ -184,26 +185,23 @@ void ply_segmentation::extractLocations(const PointCloud<PointXYZ>::Ptr& cloud, 
         pcl::compute3DCentroid(*cluster_cloud, centroid);
         pcl::PointXYZ minPt, maxPt;
         pcl::getMinMax3D(*cluster_cloud, minPt, maxPt);
-        centroid[2] = (0 + maxPt.z) / 2; // Adjust centroid Z to be midway between 0 and max Z
+
         Eigen::Matrix3f covariance;
         pcl::computeCovarianceMatrixNormalized(*cluster_cloud, centroid, covariance);
         Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigen_solver(covariance, Eigen::ComputeEigenvectors);
         Eigen::Matrix3f eigen_vectors = eigen_solver.eigenvectors();
         Eigen::Quaternionf quat(eigen_vectors);
-        minPt.z = 0; // Optional: Adjust if you want the box to start from the ground level
 
-        // Orientation is axis-aligned, so quaternion is identity
-        Eigen::Quaternionf orientation = Eigen::Quaternionf::Identity();
+        ClusterInfo info;
+        info.centroid = centroid;
+        info.dimensions = Eigen::Vector3f(maxPt.x - minPt.x, maxPt.y - minPt.y, maxPt.z - minPt.z);
+        info.orientation = quat; // Use the computed quaternion
+        info.clusterId = clusters.size() + 1; // Or any other identifier
 
-        // Print centroid (location) and orientation (quaternion)
-        std::cout << "Bounding Box " << cluster_id << " Location (Centroid): " << centroid[0] << ", " << centroid[1] << ", " << centroid[2] << std::endl;
-        std::cout << "Orientation (Quaternion): " << orientation.x() << ", " << orientation.y() << ", " << orientation.z() << ", " << orientation.w() << std::endl;
-        std::cout << "Quaternions: " << quat.x() << " " << quat.y() << " " << quat.z() << " " << quat.w() << std::endl;
-
-        std::cout << "Bounding Box " << cluster_id << " dimensions: " << maxPt.x - minPt.x << ", " << maxPt.y - minPt.y << ", " << maxPt.z - minPt.z << std::endl;
-
-        cluster_id++;
+        clusters.push_back(info);
     }
+
+    return clusters;
 }
 
 //find reference point
