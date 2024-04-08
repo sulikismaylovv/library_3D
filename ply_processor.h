@@ -113,7 +113,13 @@ public:
      * @param radius Radius for outlier removal.
      * @return True if the operation was successful, false otherwise.
      */
-    bool removeOutliers(pcl::PointCloud<pcl::PointXYZ>& cloud, int meanN, double radius);
+    bool removeOutliers(pcl::PointCloud<pcl::PointXYZ>& cloud, float meanN, double radius);
+
+    /**
+     * @brief visualizePointCloud - Visualizes the point cloud using PCL Visualizer.
+     * @param cloud - Point cloud to visualize.
+     */
+    void visualizePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
 private:
          // Internal helper methods and variables can be declared here
 };

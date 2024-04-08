@@ -15,10 +15,11 @@ std::optional<pcl::PointCloud<pcl::PointXYZ>::Ptr> ply_processor::loadCloud(cons
 bool ply_processor::invertPointCloud(pcl::PointCloud<pcl::PointXYZ>& cloud) {
     if (cloud.empty()) return false;
 
-    for (auto& point : cloud) {
-        point.y = -point.y;
-        point.z = -point.z;
-    }
+    Eigen::Affine3f transform = Eigen::Affine3f::Identity();
+    transform.matrix()(0, 0) = -1; //invert X axis
+    transform.matrix()(1,1) = -1; // Invert Y axis
+    transform.matrix()(2, 2) = -1; // Invert Z axis
+    transformPointCloud(cloud, cloud, transform);
     return true;
 }
 
@@ -110,7 +111,7 @@ bool ply_processor::applyStatisticalOutlierRemoval(pcl::PointCloud<pcl::PointXYZ
     return true;
 }
 
-bool ply_processor::removeOutliers(pcl::PointCloud<pcl::PointXYZ>& cloud, int meanN, double radius) {
+bool ply_processor::removeOutliers(pcl::PointCloud<pcl::PointXYZ>& cloud, float meanN, double radius) {
     if (cloud.empty() || meanN <= 0 || radius <= 0) return false;
 
     pcl::RadiusOutlierRemoval<pcl::PointXYZ> outrem;
@@ -122,3 +123,33 @@ bool ply_processor::removeOutliers(pcl::PointCloud<pcl::PointXYZ>& cloud, int me
 
     return true;
 }
+
+void ply_processor::visualizePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) {
+    // Downsample the cloud to improve efficiency, if necessary
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::VoxelGrid<pcl::PointXYZ> sor;
+    sor.setInputCloud(cloud);
+    sor.setLeafSize(0.01f, 0.01f, 0.01f); // Adjust the leaf size as necessary
+    sor.filter(*cloud_filtered);
+
+    // Create a viewer
+    pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("Point Cloud Viewer"));
+    viewer->setBackgroundColor(0, 0, 0); // Black background
+    viewer->addPointCloud<pcl::PointXYZ>(cloud_filtered, "cloud");
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "cloud");
+
+    // Add a coordinate system to the visualizer
+    viewer->addCoordinateSystem(1.0);
+    // Optionally, add labels to the axes
+    viewer->addText3D("X", pcl::PointXYZ(1.1, 0, 0), 0.1, 1, 0, 0, "X_axis");
+    viewer->addText3D("Y", pcl::PointXYZ(0, 1.1, 0), 0.1, 0, 1, 0, "Y_axis");
+    viewer->addText3D("Z", pcl::PointXYZ(0, 0, 1.1), 0.1, 0, 0, 1, "Z_axis");
+
+    viewer->initCameraParameters();
+
+    // Process events
+    while (!viewer->wasStopped()) {
+        viewer->spinOnce(100000); // Spin with a more reasonable delay
+    }
+}
+

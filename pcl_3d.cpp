@@ -12,49 +12,49 @@ Eigen::Vector3f PCL_3D::calibrateTray(const std::string& filePath, float height)
     }
     auto cloud = cloudOpt.value(); // Dereference std::optional
 
-    // Step 1: Invert the point cloud
-    if (!processor->invertPointCloud(*cloud)) {
-        std::cerr << "Inverting point cloud failed." << std::endl;
-        throw std::runtime_error("Inverting point cloud failed.");
-    }
-
-    // Step 2: Apply Z PassThrough Filter
-    if (!processor->applyPassThroughZOnly(*cloud, -height, 0)) {
+    // Step 1: Apply Z PassThrough Filter
+    if (!processor->applyPassThroughZOnly(*cloud, height, height+20)) {
         std::cerr << "Applying PassThrough Z filter failed." << std::endl;
         throw std::runtime_error("Applying PassThrough Z filter failed.");
     }
 
-    // Step 3: Apply Voxel Grid Filter
+    // Step 2: Apply Voxel Grid Filter
     if (!processor->applyVoxelGridFilter(*cloud, 0.5f)) { // Example leaf size
         std::cerr << "Applying Voxel Grid filter failed." << std::endl;
         throw std::runtime_error("Applying Voxel Grid filter failed.");
     }
 
-    // Step 4: Apply MLS Surface Reconstruction
+    // Step 3: Apply MLS Surface Reconstruction
     if (!processor->applyMLSSurfaceReconstruction(*cloud, 1.5f)) { // Example search radius
         std::cerr << "Applying MLS Surface Reconstruction failed." << std::endl;
         throw std::runtime_error("Applying MLS Surface Reconstruction failed.");
     }
 
-    // Step 5: Remove Outliers
+    // Step 4: Remove Outliers
     if (!processor->removeOutliers(*cloud, 5, 1.7)) { // Example meanK and stddevMulThresh
         std::cerr << "Removing outliers failed." << std::endl;
         throw std::runtime_error("Removing outliers failed.");
     }
 
-    // Step 6: Segment and Extract Clusters
+    // Step 5: Segment and Extract Clusters
     auto cluster_indices = segmentation->segmentAndExtractClusters(cloud);
 
     // Extract the largest cluster and find the reference point
     auto largest_cluster = segmentation->extractLargestCluster(cluster_indices, cloud);
     pcl::PointXYZ reference_point = segmentation->findReferencePoint(largest_cluster);
 
-    reference_point.z += 5;
+    reference_point.z += 10;
 
     std::cout << "Reference point: " << reference_point.x << " " << reference_point.y << " " << reference_point.z << std::endl;
 
     //transform the point cloud to the reference point
     segmentation->transformCloud(cloud, reference_point);
+
+    // Step 6: Invert the point cloud
+    if (!processor->invertPointCloud(*cloud)) {
+        std::cerr << "Inverting point cloud failed." << std::endl;
+        throw std::runtime_error("Inverting point cloud failed.");
+    }
 
     //Convert the reference point to Eigen::Vector3f
     Eigen::Vector3f reference_point_eigen(reference_point.x, reference_point.y, reference_point.z);
@@ -75,12 +75,16 @@ std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
     pcl::PointXYZ minPt, maxPt;
 
     if(prevLocation.isZero()){
-        minPt = {referencePoint.x() - 10, referencePoint.y() - 10, referencePoint.z() - 10};
-        maxPt = {referencePoint.x() + 1000, referencePoint.y() + 1000, referencePoint.z() + 1000};
+        minPt = {referencePoint.x() -1000, referencePoint.y() - 1000, referencePoint.z() - 2500};
+        maxPt = {referencePoint.x()+10, referencePoint.y() + 10, referencePoint.z()};
     }else{
-        minPt = {prevLocation.x() - 100, prevLocation.y() - 100, prevLocation.z()};
-        maxPt = {prevLocation.x() + 100, prevLocation.y() + 100, prevLocation.z() + 2500};
+        minPt = {prevLocation.x() - 100, prevLocation.y() - 100, prevLocation.z() -2500};
+        maxPt = {prevLocation.x() + 100, prevLocation.y() + 100, prevLocation.z() + 100};
     }
+
+    //print min and max values
+    std::cout << "Min values: " << minPt.x << " " << minPt.y << " " << minPt.z << std::endl;
+    std::cout << "Max values: " << maxPt.x << " " << maxPt.y << " " << maxPt.z << std::endl;
 
     // Step 1: Load the point cloud with the object
     auto cloudOpt = processor->loadCloud(filePathBox);
@@ -91,19 +95,15 @@ std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
 
     auto cloud = cloudOpt.value(); // Dereference std::optional
 
-    // Step 2: Invert the point cloud
-    if (!processor->invertPointCloud(*cloud)) {
-        std::cerr << "Inverting point cloud failed." << std::endl;
-        throw std::runtime_error("Inverting point cloud failed.");
-    }
-
-    // Step 3: Apply PassThrough Filter
+    // Step 2: Apply PassThrough Filter
     if (!processor->applyPassthroughFilter(*cloud, minPt, maxPt)) {
         std::cerr << "Applying PassThrough filter failed." << std::endl;
         throw std::runtime_error("Applying PassThrough filter failed.");
     }
 
-    //Step 4: Load the point cloud with the tray
+
+
+    //Step 3: Load the point cloud with the tray
     auto cloudTrayOpt = processor->loadCloud(filePathTray);
     if (!cloudTrayOpt) {
         std::cerr << "Failed to read point cloud." << std::endl;
@@ -112,32 +112,43 @@ std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
 
     auto cloudTray = cloudTrayOpt.value(); // Dereference std::optional
 
-    // Step 5: Invert the point cloud
-    if (!processor->invertPointCloud(*cloudTray)) {
-        std::cerr << "Inverting point cloud failed." << std::endl;
-        throw std::runtime_error("Inverting point cloud failed.");
-    }
-
-    // Step 6: Apply PassThrough Filter
+    // Step 4: Apply PassThrough Filter
     if (!processor->applyPassthroughFilter(*cloudTray, minPt, maxPt)) {
         std::cerr << "Applying PassThrough filter failed." << std::endl;
         throw std::runtime_error("Applying PassThrough filter failed.");
     }
 
-    // Step 7: Subtract the tray from the object
-    auto isolated_pcl = segmentation->subtractPointClouds(cloud, cloudTray, 20);
+    // Step 5: Subtract the tray from the object
+    auto isolated_pcl = segmentation->subtractPointClouds(cloud, cloudTray, 40.0f);
     if (isolated_pcl->size() == 0) {
         std::cerr << "Subtracting point clouds failed.(no boxes)" << std::endl;
         return {};
     }
 
-    // Step 8: Segment and Extract Clusters
+    //visualize the point cloud
+
+    // Step 6: Segment and Extract Clusters
     auto cluster_indices = segmentation->segmentAndExtractClusters(isolated_pcl);
 
-    // Transform the point cloud to align with the specified reference point
+    // Additional step perform outlier removal on clusers
+    for (auto& cluster : cluster_indices) {
+        auto cluster_cloud = segmentation->extractCluster(isolated_pcl, cluster);
+        if (!processor->removeOutliers(*cluster_cloud, 0.05f, 150)) { // Example meanK and stddevMulThresh
+            std::cerr << "Removing outliers failed." << std::endl;
+            throw std::runtime_error("Removing outliers failed.");
+        }
+    }
+
+    // Step 7: Transform the point cloud to align with the specified reference point
     //Convert the reference point to pcl::PointXYZ
     pcl::PointXYZ referencePointXYZ(referencePoint.x(), referencePoint.y(), referencePoint.z());
     auto transformed_cloud = segmentation->transformCloud(isolated_pcl, referencePointXYZ);
+
+    //Step 8:Invert the point cloud
+    if (!processor->invertPointCloud(*transformed_cloud)) {
+        std::cerr << "Inverting point cloud failed." << std::endl;
+        throw std::runtime_error("Inverting point cloud failed.");
+    }
 
     //Step 9: Extract locations
     auto info = segmentation->extractLocations(transformed_cloud, cluster_indices);
@@ -154,6 +165,10 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PCL_3D::transformToReferencePoint(const pcl:
 {
     //Convert the reference point to pcl::PointXYZ
     pcl::PointXYZ referencePointXYZ(referencePoint.x(), referencePoint.y(), referencePoint.z());
+
+    //inver pcl
+    processor->invertPointCloud(*cloud);
+
     return segmentation->transformCloud(cloud, referencePointXYZ);
 }
 

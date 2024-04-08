@@ -98,28 +98,28 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ply_segmentation::extractLargestCluster(cons
     return largest_cluster;
 }
 
-void ply_segmentation::visualizePointCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const std::vector<pcl::PointIndices>& cluster_indices)
-{
+void ply_segmentation::visualizePointCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const std::vector<pcl::PointIndices>& cluster_indices) {
     // Initialize viewer
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("Cluster viewer"));
     viewer->setBackgroundColor(0, 0, 0);
 
-    // Add arrows to the viewer of x, y, z from origin of length 100
+    // Add a coordinate system to the viewer
     viewer->addCoordinateSystem(50);
 
     // Add the point cloud
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> originalColor(cloud, 255, 255, 255); // White color
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> originalColor(cloud, 255, 255, 255);
     viewer->addPointCloud<pcl::PointXYZ>(cloud, originalColor, "cloud");
-    // Setup random number generation for colors
+
+    // Random number generation for colors
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, 255);
 
-    // Highlight each cluster in the cloud with a unique color and add a bounding box
-    int cluster_id = 0;
-    for (const auto& cluster : cluster_indices) {
+    // Highlight each cluster with a bounding box
+    for (int cluster_id = 0; cluster_id < cluster_indices.size(); ++cluster_id) {
+        const auto& indices = cluster_indices[cluster_id].indices;
         pcl::PointCloud<pcl::PointXYZ>::Ptr cluster_cloud(new pcl::PointCloud<pcl::PointXYZ>());
-        for (const auto& idx : cluster.indices) {
+        for (int idx : indices) {
             cluster_cloud->push_back((*cloud)[idx]);
         }
 
@@ -127,31 +127,49 @@ void ply_segmentation::visualizePointCloud(const pcl::PointCloud<pcl::PointXYZ>:
         int r = dis(gen);
         int g = dis(gen);
         int b = dis(gen);
-        pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> clusterColor(cluster_cloud, r, g, b);
-        viewer->addPointCloud<pcl::PointXYZ>(cluster_cloud, clusterColor, "cluster" + std::to_string(cluster_id));
 
-        // Calculate and add a bounding box for each cluster with minPt.z set to 0
+        // Get the bounding box points
         pcl::PointXYZ minPt, maxPt;
         pcl::getMinMax3D(*cluster_cloud, minPt, maxPt);
         minPt.z = 0; // Set min Z to the origin level for visualization
 
-        // Add bounding box with random color
-        viewer->addCube(minPt.x, maxPt.x, minPt.y, maxPt.y, minPt.z, minPt.z, r / 255.0, g / 255.0, b / 255.0, "bbox" + std::to_string(cluster_id));
-        viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 2, "bbox" + std::to_string(cluster_id));
 
-        //print dimensions of bound box:
-        std::cout << "Bounding Box " << cluster_id << " dimensions: " << maxPt.x - minPt.x << " " << maxPt.y - minPt.y << " " << maxPt.z - minPt.z << std::endl;
+        // Define the 8 vertices of the bounding box
+        pcl::PointXYZ p1(minPt.x, minPt.y, minPt.z);
+        pcl::PointXYZ p2(minPt.x, maxPt.y, minPt.z);
+        pcl::PointXYZ p3(maxPt.x, maxPt.y, minPt.z);
+        pcl::PointXYZ p4(maxPt.x, minPt.y, minPt.z);
+        pcl::PointXYZ p5(minPt.x, minPt.y, maxPt.z);
+        pcl::PointXYZ p6(minPt.x, maxPt.y, maxPt.z);
+        pcl::PointXYZ p7(maxPt.x, maxPt.y, maxPt.z);
+        pcl::PointXYZ p8(maxPt.x, minPt.y, maxPt.z);
 
+        // Draw lines between the corners (edges) of the bounding box
+        viewer->addLine(p1, p2, r / 255.0, g / 255.0, b / 255.0, "line1_" + std::to_string(cluster_id));
+        viewer->addLine(p2, p3, r / 255.0, g / 255.0, b / 255.0, "line2_" + std::to_string(cluster_id));
+        viewer->addLine(p3, p4, r / 255.0, g / 255.0, b / 255.0, "line3_" + std::to_string(cluster_id));
+        viewer->addLine(p4, p1, r / 255.0, g / 255.0, b / 255.0, "line4_" + std::to_string(cluster_id));
+        viewer->addLine(p5, p6, r / 255.0, g / 255.0, b / 255.0, "line5_" + std::to_string(cluster_id));
+        viewer->addLine(p6, p7, r / 255.0, g / 255.0, b / 255.0, "line6_" + std::to_string(cluster_id));
+        viewer->addLine(p7, p8, r / 255.0, g / 255.0, b / 255.0, "line7_" + std::to_string(cluster_id));
+        viewer->addLine(p8, p5, r / 255.0, g / 255.0, b / 255.0, "line8_" + std::to_string(cluster_id));
+        viewer->addLine(p1, p5, r / 255.0, g / 255.0, b / 255.0, "line9_" + std::to_string(cluster_id));
+        viewer->addLine(p2, p6, r / 255.0, g / 255.0, b / 255.0, "line10_" + std::to_string(cluster_id));
+        viewer->addLine(p3, p7, r / 255.0, g / 255.0, b / 255.0, "line11_" + std::to_string(cluster_id));
+        viewer->addLine(p4, p8, r / 255.0, g / 255.0, b / 255.0, "line12_" + std::to_string(cluster_id));
 
-        cluster_id++;
+        // Print dimensions of bounding box
+        std::cout << "Bounding Box " << cluster_id << " dimensions: "
+                  << maxPt.x - minPt.x << " "
+                  << maxPt.y - minPt.y << " "
+                  << maxPt.z - minPt.z << std::endl;
     }
 
     // Spin until 'q' is pressed
     while (!viewer->wasStopped()) {
-        viewer->spinOnce(100);
+        viewer->spinOnce(10000);
     }
 }
-
 pcl::PointCloud<pcl::PointXYZ>::Ptr ply_segmentation::extractCluster(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const pcl::PointIndices& cluster)
 {
     PointCloud<PointXYZ>::Ptr cluster_cloud(new PointCloud<PointXYZ>());
@@ -185,7 +203,7 @@ std::vector<ClusterInfo> ply_segmentation::extractLocations(const PointCloud<Poi
         pcl::compute3DCentroid(*cluster_cloud, centroid);
         pcl::PointXYZ minPt, maxPt;
         pcl::getMinMax3D(*cluster_cloud, minPt, maxPt);
-        minPt.z = 0; // Set min Z to the origin level for visualization
+        minPt.z = 10; // Set min Z to the origin level for visualization
 
         Eigen::Matrix3f covariance;
         pcl::computeCovarianceMatrixNormalized(*cluster_cloud, centroid, covariance);
@@ -206,14 +224,21 @@ std::vector<ClusterInfo> ply_segmentation::extractLocations(const PointCloud<Poi
 }
 
 //find reference point
-PointXYZ ply_segmentation::findReferencePoint(const PointCloud<PointXYZ>::Ptr& cloud) {
-    //reference point is at bottom left corner of the cloud
+pcl::PointXYZ ply_segmentation::findReferencePoint(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud) {
+    // Assuming cloud is not empty
+    if (cloud->points.empty()) {
+        throw std::runtime_error("The point cloud is empty.");
+    }
+
     pcl::PointXYZ minPt, maxPt;
     pcl::getMinMax3D(*cloud, minPt, maxPt);
-    //adjust height
-    //minPt.z += 20;
-    // The reference point is the minimum point (bottom left)
-    pcl::PointXYZ reference_point = minPt;
+
+    // Find the point with maximum X and minimum Y, assuming Z is height and can be disregarded for bottom right calculation
+    pcl::PointXYZ reference_point;
+    reference_point.x = maxPt.x;
+    reference_point.y = maxPt.y;
+    reference_point.z = minPt.z;
+
     return reference_point;
 }
 
