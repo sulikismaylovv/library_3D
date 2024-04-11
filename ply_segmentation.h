@@ -42,6 +42,13 @@ public:
     std::vector<pcl::PointIndices> segmentAndExtractClusters(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud);
 
     /**
+     * @brief Function to segment and extract clusters from a point cloud. The function uses Euclidean clustering to segment the cloud. This function is tailored made for calibration.
+     * @param cloud The point cloud to segment.
+     * @return A vector of point indices representing the clusters.
+     */
+    std::vector<pcl::PointIndices> segmentAndExtractForCalibration(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud);
+
+    /**
      * @brief Function to extract the largest cluster from a point cloud.
      * @param cluster_indices The vector of point indices representing the clusters.
      * @param cloud The point cloud to extract the cluster from.

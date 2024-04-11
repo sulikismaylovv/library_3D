@@ -20,6 +20,87 @@ std::vector<pcl::PointIndices> ply_segmentation::segmentAndExtractClusters(const
     seg.setMaxIterations(1000);
     seg.setDistanceThreshold(0.5);
 
+    // Assume a maximum number of iterations or stop if the change in removed points is small
+    int max_iterations = 10;
+    int iterations = 0;
+    int previous_size = static_cast<int>(cloud->size());
+    int delta_threshold = 50; // Minimum change in size to continue segmentation
+
+    while (iterations < max_iterations) {
+        seg.setInputCloud(cloud);
+        seg.segment(*inliers, *coefficients);
+        if (inliers->indices.size() == 0 || (previous_size - static_cast<int>(cloud->size()) < delta_threshold)) {
+            std::cout << "Could not estimate a planar model for the given dataset or change in point cloud size is too small." << std::endl;
+            break;
+        }
+
+        // Check the normal of the plane if necessary
+        Eigen::Vector3f plane_normal(coefficients->values[0], coefficients->values[1], coefficients->values[2]);
+        // For instance, if you expect the normal to be roughly pointing up, you can check if the z-component is positive
+        // Adjust the tolerance according to your scenario
+        if (std::abs(plane_normal.dot(Eigen::Vector3f::UnitZ())) < 0.9) {
+            std::cout << "Plane normal is not pointing upwards." << std::endl;
+            break; // This is not the plane we are looking for, so we stop the process
+        }
+
+        // Extract the planar inliers from the input cloud
+        ExtractIndices<PointXYZ> extract;
+        extract.setInputCloud(cloud);
+        extract.setIndices(inliers);
+        extract.setNegative(false);
+        extract.filter(*cloud_plane); // Extracted but not used
+
+        // Remove the planar inliers, extract the rest
+        extract.setNegative(true);
+        PointCloud<PointXYZ>::Ptr cloud_f(new PointCloud<PointXYZ>());
+        extract.filter(*cloud_f);
+
+        // Update cloud and sizes for the next iteration
+        *cloud = *cloud_f;
+        previous_size = static_cast<int>(cloud->size());
+
+        // Increment the iteration counter
+        iterations++;
+    }
+
+    // Creating the KdTree object for the search method of the extraction
+    search::KdTree<PointXYZ>::Ptr tree(new search::KdTree<PointXYZ>());
+    tree->setInputCloud(cloud);
+
+    std::vector<PointIndices> cluster_indices;
+    EuclideanClusterExtraction<PointXYZ> ec;
+    // Explanation of the parameters:
+    // Cluster Tolerance - the maximum distance between points that belong to the same cluster
+    // Min Cluster Size - the minimum number of points that a cluster needs to contain in order to be considered valid
+    // Max Cluster Size - the maximum number of points that a cluster needs to contain in order to be considered valid (useful for filtering noise)
+    // For example , cluster tolerance of 11 means 11mm
+    ec.setClusterTolerance(13.0);
+    ec.setMinClusterSize(750);
+    ec.setMaxClusterSize(15000);
+    ec.setSearchMethod(tree);
+    ec.setInputCloud(cloud);
+    ec.extract(cluster_indices);
+
+    return cluster_indices;
+}
+
+std::vector<pcl::PointIndices> ply_segmentation::segmentAndExtractForCalibration(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud)
+{
+    // Create the segmentation object for the planar model and set all the parameters
+    SACSegmentation<PointXYZ> seg;
+    PointIndices::Ptr inliers(new PointIndices);
+    ModelCoefficients::Ptr coefficients(new ModelCoefficients);
+    PointCloud<PointXYZ>::Ptr cloud_plane(new PointCloud<PointXYZ>());
+    PCDWriter writer;
+    seg.setOptimizeCoefficients(true);
+    seg.setModelType(SACMODEL_PLANE);
+    seg.setMethodType(SAC_RANSAC);
+    // Explanation of the parameters:
+    // Distance Threshold - the maximum distance a point can be from the model and still be considered an inlier (in meters)
+    // MaxIterations - the maximum number of iterations the algorithm will run for
+    seg.setMaxIterations(1000);
+    seg.setDistanceThreshold(0.5);
+
     int nr_points = static_cast<int>(cloud->size());
     while (cloud->size() > 0.3 * nr_points) {
         // Segment the largest planar component from the remaining cloud

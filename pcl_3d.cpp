@@ -37,7 +37,7 @@ Eigen::Vector3f PCL_3D::calibrateTray(const std::string& filePath, float height)
     }
 
     // Step 5: Segment and Extract Clusters
-    auto cluster_indices = segmentation->segmentAndExtractClusters(cloud);
+    auto cluster_indices = segmentation->segmentAndExtractForCalibration(cloud);
 
     // Extract the largest cluster and find the reference point
     auto largest_cluster = segmentation->extractLargestCluster(cluster_indices, cloud);
@@ -76,7 +76,7 @@ std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
 
     if(prevLocation.isZero()){
         minPt = {referencePoint.x() -1000, referencePoint.y() - 1000, referencePoint.z() - 2500};
-        maxPt = {referencePoint.x()+10, referencePoint.y() + 10, referencePoint.z()};
+        maxPt = {referencePoint.x(), referencePoint.y(), referencePoint.z()};
     }else{
         minPt = {prevLocation.x() - 100, prevLocation.y() - 100, prevLocation.z() -2500};
         maxPt = {prevLocation.x() + 100, prevLocation.y() + 100, prevLocation.z() + 100};
@@ -125,7 +125,15 @@ std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
         return {};
     }
 
+    //Optional, statistical outlier removal
+    if (!processor->removeOutliers(*isolated_pcl, 5, 1.7)) { // Example meanK and stddevMulThresh
+        std::cerr << "Removing outliers failed." << std::endl;
+        throw std::runtime_error("Removing outliers failed.");
+    }
+
     //visualize the point cloud
+    //processor->visualizePointCloud(isolated_pcl);
+
 
     // Step 6: Segment and Extract Clusters
     auto cluster_indices = segmentation->segmentAndExtractClusters(isolated_pcl);
