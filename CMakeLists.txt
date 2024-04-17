@@ -10,11 +10,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Enable AUTOMOC, AUTOUIC, and AUTORCC for Qt
 set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
+# set(CMAKE_AUTOMOC ON)
+# set(CMAKE_AUTORCC ON)
 
 # Find required packages
-find_package(QT NAMES Qt5 COMPONENTS Core REQUIRED)
+find_package(QT NAMES Qt6 COMPONENTS Core REQUIRED)
 find_package(PCL 1.3 REQUIRED COMPONENTS common io filters visualization segmentation surface)
 
 # Include directories for PCL and Qt
@@ -35,8 +35,7 @@ add_library(3DSystem SHARED
 )
 
 # Specify libraries to link with target
-target_link_libraries(3DSystem PRIVATE Qt5::Core ${PCL_LIBRARIES})
-
+target_link_libraries(3DSystem PRIVATE Qt6::GlobalConfig  ${PCL_LIBRARIES})
 # Define compilation definitions, if necessary
 target_compile_definitions(3DSystem PRIVATE SYSTEM_3D_LIBRARY)
 
@@ -55,11 +54,15 @@ include(GNUInstallDirs)
 
 # Install rules, if required
 # Put library in /home/suleyman/Desktop/MasterThesis/library directory and headers in include directory
-install(TARGETS 3DSystem
-    LIBRARY DESTINATION /home/suleyman/Desktop/MasterThesis/library/lib
-    PUBLIC_HEADER DESTINATION /home/suleyman/Desktop/MasterThesis/library/lib/include
-)
+# install(TARGETS 3DSystem
+#     LIBRARY DESTINATION /home/suleyman/Desktop/MasterThesis/library/lib
+#     PUBLIC_HEADER DESTINATION /home/suleyman/Desktop/MasterThesis/library/lib/include
+# )
 # install(TARGETS 3DSystem
 #     LIBRARY DESTINATION /Users/suleymanismaylov/Desktop/MasterThesis/Library/lib
 #     PUBLIC_HEADER DESTINATION /Users/suleymanismaylov/Desktop/MasterThesis/Library/lib/include
 # )
+install(TARGETS 3DSystem
+    LIBRARY DESTINATION /home/user/Documents/Thesis/library/lib
+    PUBLIC_HEADER DESTINATION /home/user/Documents/Thesis/library/lib/include
+)
