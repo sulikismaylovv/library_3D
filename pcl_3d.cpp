@@ -276,36 +276,41 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PCL_3D::preprocessPointCloud(const std::stri
     }
 
 
+    if(prevLocation.isZero()){
+        //Step 3: Load the point cloud with the tray
+        auto cloudTrayOpt = processor->loadCloud(filePathTray);
+        if (!cloudTrayOpt) {
+            std::cerr << "Failed to read point cloud." << std::endl;
+            throw std::runtime_error("Failed to read point cloud.");
+        }
 
-    //Step 3: Load the point cloud with the tray
-    auto cloudTrayOpt = processor->loadCloud(filePathTray);
-    if (!cloudTrayOpt) {
-        std::cerr << "Failed to read point cloud." << std::endl;
-        throw std::runtime_error("Failed to read point cloud.");
+        auto cloudTray = cloudTrayOpt.value(); // Dereference std::optional
+
+        // Step 4: Apply PassThrough Filter
+        if (!processor->applyPassthroughFilter(*cloudTray, minPt, maxPt)) {
+            std::cerr << "Applying PassThrough filter failed." << std::endl;
+            throw std::runtime_error("Applying PassThrough filter failed.");
+        }
+
+        // Step 5: Subtract the tray from the object
+        auto isolated_pcl = segmentation->subtractPointClouds(cloud, cloudTray, 40.0f);
+        if (isolated_pcl->size() == 0) {
+            std::cerr << "Subtracting point clouds failed.(no boxes)" << std::endl;
+            return {};
+        }
+
+        //Optional, statistical outlier removal
+        if (!processor->removeOutliers(*isolated_pcl, 5, 1.7)) { // Example meanK and stddevMulThresh
+            std::cerr << "Removing outliers failed." << std::endl;
+            throw std::runtime_error("Removing outliers failed.");
+        }
+
+        return isolated_pcl;
+    }
+    else{
+        return cloud;
     }
 
-    auto cloudTray = cloudTrayOpt.value(); // Dereference std::optional
-
-    // Step 4: Apply PassThrough Filter
-    if (!processor->applyPassthroughFilter(*cloudTray, minPt, maxPt)) {
-        std::cerr << "Applying PassThrough filter failed." << std::endl;
-        throw std::runtime_error("Applying PassThrough filter failed.");
-    }
-
-    // Step 5: Subtract the tray from the object
-    auto isolated_pcl = segmentation->subtractPointClouds(cloud, cloudTray, 40.0f);
-    if (isolated_pcl->size() == 0) {
-        std::cerr << "Subtracting point clouds failed.(no boxes)" << std::endl;
-        return {};
-    }
-
-    //Optional, statistical outlier removal
-    if (!processor->removeOutliers(*isolated_pcl, 5, 1.7)) { // Example meanK and stddevMulThresh
-        std::cerr << "Removing outliers failed." << std::endl;
-        throw std::runtime_error("Removing outliers failed.");
-    }
-
-    return isolated_pcl;
 }
 
 
