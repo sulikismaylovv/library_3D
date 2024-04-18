@@ -80,9 +80,6 @@ std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
     //Half the dimensions
     Eigen::Vector3f halfDimensions = dimensions;
 
-    //Initiate info
-    std::vector<ClusterInfo> info;
-
     std::cout << "Half Dimensions: " << halfDimensions.x() << " " << halfDimensions.y() << " " << halfDimensions.z() << std::endl;
     std::cout << "Prev Location: " << prevLocation.x() << " " << prevLocation.y() << " " << prevLocation.z() << std::endl;
     std::cout << "Abs Prev Location: " << absPrevLocation.x() << " " << absPrevLocation.y() << " " << absPrevLocation.z() << std::endl;
@@ -180,28 +177,17 @@ std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
     }
 
     //Step 9: Extract locations
-    info = segmentation->extractLocations(transformed_cloud, cluster_indices);
+    auto info = segmentation->extractLocations(transformed_cloud, cluster_indices);
 
 
     // Step 10: Visualize the results
     //segmentation->visualizePointCloud(transformed_cloud, cluster_indices);
     }
     else{
-        //Convert the reference point to pcl::PointXYZ
-        pcl::PointXYZ referencePointXYZ(referencePoint.x(), referencePoint.y(), referencePoint.z());
-        auto transformed_cloud = segmentation->transformCloud(isolated_pcl, referencePointXYZ);
-
-        //Step 8:Invert the point cloud
-        if (!processor->invertPointCloud(*transformed_cloud)) {
-            std::cerr << "Inverting point cloud failed." << std::endl;
-            throw std::runtime_error("Inverting point cloud failed.");
-        }
-
         //Extract Location from One cluster
-        info = segmentation->extractLocationsCloud(isolated_pcl);
-
-        //processor->visualizePointCloud(isolated_pcl);
+        auto info = segmentation->extractLocationsCloud(isolated_pcl);
     }
+
 
     return info;
 

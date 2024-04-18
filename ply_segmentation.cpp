@@ -293,7 +293,8 @@ std::vector<ClusterInfo> ply_segmentation::extractLocations(const PointCloud<Poi
         Eigen::Quaternionf quat(eigen_vectors);
 
         ClusterInfo info;
-        info.centroid = centroid;
+        Eigen::Vector4f bboxCentroid((minPt.x + maxPt.x) / 2, (minPt.y + maxPt.y) / 2, (minPt.z + maxPt.z) / 2, 1.0);
+        info.centroid = bboxCentroid;
         info.dimensions = Eigen::Vector3f(maxPt.x - minPt.x, maxPt.y - minPt.y, maxPt.z - minPt.z);
         info.orientation = quat; // Use the computed quaternion
         info.clusterId = clusters.size() + 1; // Or any other identifier
@@ -303,6 +304,7 @@ std::vector<ClusterInfo> ply_segmentation::extractLocations(const PointCloud<Poi
 
     return clusters;
 }
+
 
 
 
@@ -359,5 +361,32 @@ PointCloud<PointXYZ>::Ptr ply_segmentation::subtractPointClouds(const PointCloud
     extract.filter(*result);
 
     return result;
+}
+
+//Function to extract location from cloud
+std::vector<ClusterInfo> ply_segmentation::extractLocationsCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud) {
+    std::vector<ClusterInfo> clusters;
+
+    Eigen::Vector4f centroid;
+    pcl::compute3DCentroid(*cloud, centroid);
+    pcl::PointXYZ minPt, maxPt;
+    pcl::getMinMax3D(*cloud, minPt, maxPt);
+    minPt.z = 10; // Set min Z to the origin level for visualization
+
+    Eigen::Matrix3f covariance;
+    pcl::computeCovarianceMatrixNormalized(*cloud, centroid, covariance);
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigen_solver(covariance, Eigen::ComputeEigenvectors);
+    Eigen::Matrix3f eigen_vectors = eigen_solver.eigenvectors();
+    Eigen::Quaternionf quat(eigen_vectors);
+
+    ClusterInfo info;
+    Eigen::Vector4f bboxCentroid((minPt.x + maxPt.x) / 2, (minPt.y + maxPt.y) / 2, (minPt.z + maxPt.z) / 2, 1.0);
+    info.centroid = bboxCentroid;
+    info.dimensions = Eigen::Vector3f(maxPt.x - minPt.x, maxPt.y - minPt.y, maxPt.z - minPt.z);
+    info.orientation = quat; // Use the computed quaternion
+    info.clusterId = clusters.size() + 1; // Or any other identifier
+
+    clusters.push_back(info);
+    return clusters;
 }
 

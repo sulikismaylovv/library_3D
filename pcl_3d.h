@@ -33,7 +33,7 @@ public:
     std::vector<ClusterInfo> findBoundingBox(const std::string& filePathBox,
                                     const std::string& filePathTray,
                                     const Eigen::Vector3f& referencePoint,
-                                    const Eigen::Vector3f& prevLocation,
+                                    const Eigen::Vector3f& prevLocation = Eigen::Vector3f::Zero(),
                                     const Eigen::Vector3f& dimensions = Eigen::Vector3f::Zero());
 
     /**
