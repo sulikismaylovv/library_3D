@@ -105,6 +105,9 @@ public:
      */
     PointXYZ findReferencePoint(const PointCloud<PointXYZ>::Ptr& cloud);
 
+    //Function to extract lcoation from one cloud
+    std::vector<ClusterInfo> extractLocationsCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud);
+
 };
 
 #endif // PLY_SEGMENTATION_H

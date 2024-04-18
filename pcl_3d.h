@@ -24,7 +24,8 @@ public:
     /**
      * @brief Finds the bounding box of a point cloud and returns the eigen vectors representing its orientation.
      *
-     * @param cloud The point cloud for which the bounding box is to be found.
+     * @param filePathBox The file path to the point cloud representing the box.
+     * @param filePathTray The file path to the point cloud representing the tray.
      * @param referencePoint The reference point (x, y, z) to be used in calculations.
      * @param prevLocation The previous location (x, y, z) of the point cloud, used for orientation purposes (optional).
      * @return Vector of ClusterInfo objects containing the bounding box information for each cluster.
@@ -32,7 +33,8 @@ public:
     std::vector<ClusterInfo> findBoundingBox(const std::string& filePathBox,
                                     const std::string& filePathTray,
                                     const Eigen::Vector3f& referencePoint,
-                                    const Eigen::Vector3f& prevLocation);
+                                    const Eigen::Vector3f& prevLocation = Eigen::Vector3f::Zero(),
+                                    const Eigen::Vector3f& dimensions = Eigen::Vector3f::Zero());
 
     /**
      * @brief Calibrates the tray to find the reference point based on the given height and point cloud.
@@ -53,6 +55,26 @@ public:
      */
     pcl::PointCloud<pcl::PointXYZ>::Ptr transformToReferencePoint(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,
                                                                   const Eigen::Vector3f& referencePoint);
-};
 
+
+    /**
+     * @brief preprocessPointCloud function preprocesses the point cloud to find the bounding box and returns the isolated point cloud.
+     * @param filePathBox The file path to the point cloud representing the box.
+     * @param filePathTray The file path to the point cloud representing the tray.
+     * @param referencePoint The reference point (x, y, z) to be used in calculations.
+     * @param prevLocation The previous location (x, y, z) of the point cloud, used for orientation purposes (optional).
+     * @return Vector of ClusterInfo objects containing the bounding box information for each cluster.
+     */
+    pcl::PointCloud<pcl::PointXYZ>::Ptr preprocessPointCloud(const std::string& filePathBox,
+                                                             const std::string &filePathTray,
+                                                             const Eigen::Vector3f& referencePoint,
+                                                             const Eigen::Vector3f& prevLocation = Eigen::Vector3f::Zero(),
+                                                             const Eigen::Vector3f& dimensions = Eigen::Vector3f::Zero());
+
+
+    //Light Version of the findBoundingBox function that takes only the isolated PCL and ref point
+    std::vector<ClusterInfo> findBoundingBoxLight(const pcl::PointCloud<pcl::PointXYZ>::Ptr& isolated_pcl,
+                                                  const Eigen::Vector3f& referencePoint,
+                                                  const Eigen::Vector3f& prevLocation = Eigen::Vector3f::Zero());
+};
 #endif // PCL_3D_H
