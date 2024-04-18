@@ -304,6 +304,13 @@ std::vector<ClusterInfo> ply_segmentation::extractLocations(const PointCloud<Poi
     return clusters;
 }
 
+
+
+
+
+
+
+
 //find reference point
 pcl::PointXYZ ply_segmentation::findReferencePoint(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud) {
     // Assuming cloud is not empty
