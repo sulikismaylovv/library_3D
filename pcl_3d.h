@@ -68,12 +68,13 @@ public:
     pcl::PointCloud<pcl::PointXYZ>::Ptr preprocessPointCloud(const std::string& filePathBox,
                                                              const std::string &filePathTray,
                                                              const Eigen::Vector3f& referencePoint,
-                                                             const Eigen::Vector3f& prevLocation);
+                                                             const Eigen::Vector3f& prevLocation = Eigen::Vector3f::Zero(),
+                                                             const Eigen::Vector3f& dimensions = Eigen::Vector3f::Zero());
 
 
     //Light Version of the findBoundingBox function that takes only the isolated PCL and ref point
     std::vector<ClusterInfo> findBoundingBoxLight(const pcl::PointCloud<pcl::PointXYZ>::Ptr& isolated_pcl,
-                                                  const Eigen::Vector3f& referencePoint);
+                                                  const Eigen::Vector3f& referencePoint,
+                                                  const Eigen::Vector3f& prevLocation = Eigen::Vector3f::Zero());
 };
-
 #endif // PCL_3D_H
