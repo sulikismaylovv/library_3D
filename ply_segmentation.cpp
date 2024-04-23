@@ -298,6 +298,7 @@ std::vector<ClusterInfo> ply_segmentation::extractLocations(const PointCloud<Poi
         info.dimensions = Eigen::Vector3f(maxPt.x - minPt.x, maxPt.y - minPt.y, maxPt.z - minPt.z);
         info.orientation = quat; // Use the computed quaternion
         info.clusterId = clusters.size() + 1; // Or any other identifier
+        info.eulerAngles = quat.toRotationMatrix().eulerAngles(2, 1, 0); // Extract Euler angles from the quaternion
 
         clusters.push_back(info);
     }
