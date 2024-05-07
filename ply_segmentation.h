@@ -17,7 +17,9 @@
 #include <pcl/common/eigen.h>
 #include <pcl/common/centroid.h>
 #include <pcl/common/transforms.h>
+#include <pcl/common/pca.h>
 #include <pcl/segmentation/region_growing.h>
+#include <pcl/features/moment_of_inertia_estimation.h>
 
 #include <pcl/filters/radius_outlier_removal.h>
 #include <random>

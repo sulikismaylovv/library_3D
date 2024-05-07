@@ -14,7 +14,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 # Find required packages
-find_package(QT NAMES Qt5 COMPONENTS Core REQUIRED)
+find_package(QT NAMES Qt6 COMPONENTS Core REQUIRED)
 find_package(PCL 1.3 REQUIRED COMPONENTS common io filters visualization segmentation surface)
 
 # Include directories for PCL and Qt
@@ -35,7 +35,7 @@ add_library(3DSystem SHARED
 )
 
 # Specify libraries to link with target
-target_link_libraries(3DSystem PRIVATE Qt5::Core ${PCL_LIBRARIES})
+target_link_libraries(3DSystem PRIVATE ${PCL_LIBRARIES})
 
 # Define compilation definitions, if necessary
 target_compile_definitions(3DSystem PRIVATE SYSTEM_3D_LIBRARY)

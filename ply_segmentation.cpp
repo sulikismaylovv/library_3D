@@ -270,8 +270,7 @@ PointCloud<PointXYZ>::Ptr ply_segmentation::transformCloud(const PointCloud<Poin
     return cloud;
 }
 
-//extract locations
-std::vector<ClusterInfo> ply_segmentation::extractLocations(const PointCloud<PointXYZ>::Ptr& cloud, const std::vector<pcl::PointIndices>& cluster_indices) {
+std::vector<ClusterInfo> ply_segmentation::extractLocations(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const std::vector<pcl::PointIndices>& cluster_indices) {
     std::vector<ClusterInfo> clusters;
 
     for (const auto& cluster : cluster_indices) {
@@ -280,24 +279,49 @@ std::vector<ClusterInfo> ply_segmentation::extractLocations(const PointCloud<Poi
             cluster_cloud->push_back((*cloud)[idx]);
         }
 
+        //Print number of points in the cluster
+        std::cout << "Number of points in the cluster: " << cluster_cloud->size() << std::endl;
+
+        pcl::PCA<pcl::PointXYZ> pca;
+        pca.setInputCloud(cluster_cloud);
+
+        // Compute the centroid of the cluster
         Eigen::Vector4f centroid;
         pcl::compute3DCentroid(*cluster_cloud, centroid);
-        pcl::PointXYZ minPt, maxPt;
-        pcl::getMinMax3D(*cluster_cloud, minPt, maxPt);
-        minPt.z = 10; // Set min Z to the origin level for visualization
 
-        Eigen::Matrix3f covariance;
-        pcl::computeCovarianceMatrixNormalized(*cluster_cloud, centroid, covariance);
-        Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigen_solver(covariance, Eigen::ComputeEigenvectors);
-        Eigen::Matrix3f eigen_vectors = eigen_solver.eigenvectors();
+        // Using PCA to find the orientation and eigenvectors for OBB
+        Eigen::Matrix3f eigen_vectors = pca.getEigenVectors();
+
+        // Compute Quaternion from rotation matrix
         Eigen::Quaternionf quat(eigen_vectors);
 
+        // Project the points onto the PCA axes
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected(new pcl::PointCloud<pcl::PointXYZ>());
+        pca.project(*cluster_cloud, *cloud_projected);
+
+        // Calculate the min and max along the projected axes
+        pcl::PointXYZ min_point_OBB, max_point_OBB;
+        pcl::getMinMax3D(*cloud_projected, min_point_OBB, max_point_OBB);
+
+        //Print out min and max
+        std::cout << "Min Point: " << min_point_OBB.x << " " << min_point_OBB.y << " " << min_point_OBB.z << std::endl;
+        std::cout << "Max Point: " << max_point_OBB.x << " " << max_point_OBB.y << " " << max_point_OBB.z << std::endl;
+
+
+        // Calculate the actual coordinates of the OBB in the original space
+        Eigen::Vector3f position = centroid.head<3>();
+
+        // Calculate dimensions of the OBB
+        Eigen::Vector3f scale = 0.5f * (Eigen::Vector3f(max_point_OBB.x, max_point_OBB.y, max_point_OBB.z) -
+                                        Eigen::Vector3f(min_point_OBB.x, min_point_OBB.y, min_point_OBB.z));
+
+        Eigen::Vector3f dimensions = scale * 2.0f;
+
         ClusterInfo info;
-        Eigen::Vector4f bboxCentroid((minPt.x + maxPt.x) / 2, (minPt.y + maxPt.y) / 2, (minPt.z + maxPt.z) / 2, 1.0);
-        info.centroid = bboxCentroid;
-        info.dimensions = Eigen::Vector3f(maxPt.x - minPt.x, maxPt.y - minPt.y, maxPt.z - minPt.z);
-        info.orientation = quat; // Use the computed quaternion
-        info.clusterId = clusters.size() + 1; // Or any other identifier
+        info.centroid = centroid;
+        info.dimensions = dimensions;
+        info.orientation = quat; // Correct orientation of the cluster
+        info.clusterId = clusters.size() + 1;
         info.eulerAngles = quat.toRotationMatrix().eulerAngles(2, 1, 0); // Extract Euler angles from the quaternion
 
         clusters.push_back(info);
@@ -305,7 +329,6 @@ std::vector<ClusterInfo> ply_segmentation::extractLocations(const PointCloud<Poi
 
     return clusters;
 }
-
 
 
 
