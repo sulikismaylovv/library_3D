@@ -149,28 +149,10 @@ std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
             return {};
         }
 
-        //Optional, statistical outlier removal
-        // if (!processor->removeOutliers(*isolated_pcl, 5, 1.7)) { // Example meanK and stddevMulThresh
-        //     std::cerr << "Removing outliers failed." << std::endl;
-        //     throw std::runtime_error("Removing outliers failed.");
-        // }
-
         // Step 6: Segment and Extract Clusters
         auto cluster_indices = segmentation->segmentAndExtractClusters(isolated_pcl);
 
-        // Additional step perform outlier removal on clusers
-        for (auto& cluster : cluster_indices) {
-            auto cluster_cloud = segmentation->extractCluster(isolated_pcl, cluster);
-            if (!processor->removeOutliers(*cluster_cloud, 0.05f, 150)) { // Example meanK and stddevMulThresh
-                std::cerr << "Removing outliers failed." << std::endl;
-                throw std::runtime_error("Removing outliers failed.");
-            }
-        }
-        //processor->visualizePointCloud(isolated_pcl);
-
-
         // Step 7: Transform the point cloud to align with the specified reference point
-        //Convert the reference point to pcl::PointXYZ
         pcl::PointXYZ referencePointXYZ(referencePoint.x(), referencePoint.y(), referencePoint.z());
         auto transformed_cloud = segmentation->transformCloud(isolated_pcl, referencePointXYZ);
 
@@ -302,10 +284,10 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PCL_3D::preprocessPointCloud(const std::stri
         }
 
         //Optional, statistical outlier removal
-        if (!processor->removeOutliers(*isolated_pcl, 5, 1.7)) { // Example meanK and stddevMulThresh
-            std::cerr << "Removing outliers failed." << std::endl;
-            throw std::runtime_error("Removing outliers failed.");
-        }
+        // if (!processor->removeOutliers(*isolated_pcl, 5, 1.7)) { // Example meanK and stddevMulThresh
+        //     std::cerr << "Removing outliers failed." << std::endl;
+        //     throw std::runtime_error("Removing outliers failed.");
+        // }
 
         return isolated_pcl;
     }

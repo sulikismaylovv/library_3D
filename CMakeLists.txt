@@ -16,6 +16,7 @@ set(CMAKE_AUTORCC ON)
 # Find required packages
 find_package(QT NAMES Qt6 COMPONENTS Core REQUIRED)
 find_package(PCL 1.3 REQUIRED COMPONENTS common io filters visualization segmentation surface)
+find_package(CGAL)
 
 # Include directories for PCL and Qt
 include_directories(${PCL_INCLUDE_DIRS})
@@ -35,7 +36,7 @@ add_library(3DSystem SHARED
 )
 
 # Specify libraries to link with target
-target_link_libraries(3DSystem PRIVATE ${PCL_LIBRARIES})
+target_link_libraries(3DSystem PRIVATE ${PCL_LIBRARIES} CGAL::CGAL)
 
 # Define compilation definitions, if necessary
 target_compile_definitions(3DSystem PRIVATE SYSTEM_3D_LIBRARY)
