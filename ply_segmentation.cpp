@@ -78,7 +78,7 @@ std::vector<pcl::PointIndices> ply_segmentation::segmentAndExtractClusters(const
     // For example , cluster tolerance of 11 means 11mm
     ec.setClusterTolerance(13.0);
     ec.setMinClusterSize(500);
-    ec.setMaxClusterSize(50000);
+    ec.setMaxClusterSize(25000);
     ec.setSearchMethod(tree);
     ec.setInputCloud(cloud);
     ec.extract(cluster_indices);
@@ -143,7 +143,7 @@ std::vector<pcl::PointIndices> ply_segmentation::segmentAndExtractForCalibration
     // For example , cluster tolerance of 11 means 11mm
     ec.setClusterTolerance(15.0);
     ec.setMinClusterSize(500);
-    ec.setMaxClusterSize(75000);
+    ec.setMaxClusterSize(15000);
     ec.setSearchMethod(tree);
     ec.setInputCloud(cloud);
     ec.extract(cluster_indices);
@@ -281,6 +281,9 @@ std::vector<ClusterInfo> ply_segmentation::extractLocations(const pcl::PointClou
         for (const auto& idx : cluster.indices) {
             cluster_cloud->push_back((*cloud)[idx]);
         }
+
+        //print cluster size
+        std::cout << "Cluster size: " << cluster_cloud->size() << std::endl;
 
         Eigen::Vector4f centroid;
         pcl::compute3DCentroid(*cluster_cloud, centroid);
