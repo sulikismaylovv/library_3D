@@ -120,6 +120,10 @@ public:
      * @param cloud - Point cloud to visualize.
      */
     void visualizePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
+
+    //
+    void visualizePointCloudV2(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud, Eigen::Vector4f centroid, Eigen::Matrix3f eigen_vectors);
+
 private:
          // Internal helper methods and variables can be declared here
 };

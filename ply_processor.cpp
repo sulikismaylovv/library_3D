@@ -192,3 +192,44 @@ void ply_processor::visualizePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr clou
     }
 }
 
+void ply_processor::visualizePointCloudV2(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud, Eigen::Vector4f centroid, Eigen::Matrix3f eigen_vectors) {
+    pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
+    viewer->setBackgroundColor(0, 0, 0);
+
+    // Visualize original cloud in white
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> white_color(cloud, 255, 255, 255);
+    viewer->addPointCloud<pcl::PointXYZ>(cloud, white_color, "original cloud");
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "original cloud");
+
+    // Visualize transformed cloud in red
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red_color(transformed_cloud, 255, 0, 0);
+    viewer->addPointCloud<pcl::PointXYZ>(transformed_cloud, red_color, "transformed cloud");
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "transformed cloud");
+
+    // Add a coordinate system to the visualizer
+    viewer->addCoordinateSystem(50.0);
+    // Optionally, add labels to the axes
+    viewer->addText3D("X", pcl::PointXYZ(1.1, 0, 0), 0.1, 1, 0, 0, "X_axis");
+    viewer->addText3D("Y", pcl::PointXYZ(0, 1.1, 0), 0.1, 0, 1, 0, "Y_axis");
+    viewer->addText3D("Z", pcl::PointXYZ(0, 0, 1.1), 0.1, 0, 0, 1, "Z_axis");
+
+    // Draw eigenvectors as arrows
+    pcl::PointXYZ origin;
+    origin.x = centroid[0];
+    origin.y = centroid[1];
+    origin.z = centroid[2];
+    pcl::PointXYZ end;
+    for (int i = 0; i < 3; ++i) {
+        end.x = origin.x + 0.1 * eigen_vectors(0, i); // Scale factor for visualization
+        end.y = origin.y + 0.1 * eigen_vectors(1, i);
+        end.z = origin.z + 0.1 * eigen_vectors(2, i);
+        std::string arrow_id = "eigen_vector_" + std::to_string(i);
+        viewer->addArrow(end, origin, 1.0, 0.0, 0.0, false, arrow_id);
+    }
+
+    // Spin until closed
+    while (!viewer->wasStopped()) {
+        viewer->spinOnce(100000);
+    }
+}
+
