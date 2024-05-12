@@ -310,18 +310,19 @@ std::vector<ClusterInfo> ply_segmentation::extractLocations(const pcl::PointClou
         minPt.z = 10; // Set min Z to the origin level for visualization
 
         ClusterInfo info;
-        info.centroid = Eigen::Vector4f((minPt.x + maxPt.x) / 2, (minPt.y + maxPt.y) / 2, (minPt.z + maxPt.z) / 2, 1.0);
+        info.centroid = centroid;
         info.dimensions = Eigen::Vector3f(maxPt.x - minPt.x, maxPt.y - minPt.y, maxPt.z - minPt.z);
         Eigen::Quaternionf quat(rotation_matrix);
         info.orientation = quat; // Store the orientation
         info.clusterId = clusters.size() + 1;
         info.eulerAngles = quat.toRotationMatrix().eulerAngles(2, 1, 0);
+        info.clusterSize = cluster_cloud->size();
 
         clusters.push_back(info);
 
 
         // Enhanced visualization to check alignments
-        std::unique_ptr<ply_processor> processor = std::make_unique<ply_processor>();
+        //std::unique_ptr<ply_processor> processor = std::make_unique<ply_processor>();
         //processor->visualizePointCloud(rotated_cloud);
         //processor->visualizePointCloudV2(cluster_cloud, rotated_cloud, centroid, eigen_vectors);
     }
@@ -390,37 +391,48 @@ PointCloud<PointXYZ>::Ptr ply_segmentation::subtractPointClouds(const PointCloud
 std::vector<ClusterInfo> ply_segmentation::extractLocationsCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud) {
     std::vector<ClusterInfo> clusters;
 
-    // Compute centroid and covariance matrix
+    //print cluster size
+    std::cout << "Cluster size: " << cloud->size() << std::endl;
+
     Eigen::Vector4f centroid;
     pcl::compute3DCentroid(*cloud, centroid);
     Eigen::Matrix3f covariance;
     pcl::computeCovarianceMatrixNormalized(*cloud, centroid, covariance);
-
-    // Eigen decomposition to find principal directions
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigen_solver(covariance, Eigen::ComputeEigenvectors);
     Eigen::Matrix3f eigen_vectors = eigen_solver.eigenvectors();
 
-    // Form the full 4x4 transformation matrix
-    Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();  // Initialize as identity matrix
-    transform.block<3, 3>(0, 0) = eigen_vectors.transpose();  // Set rotation part
-    transform.block<3, 1>(0, 3) = -eigen_vectors.transpose() * centroid.head<3>();  // Set translation part
+    // Find the principal component (largest eigenvector)
+    int principal_component_idx = std::distance(eigen_solver.eigenvalues().data(), std::max_element(eigen_solver.eigenvalues().data(), eigen_solver.eigenvalues().data() + 3));
 
-    // Transform the cloud
-    pcl::PointCloud<pcl::PointXYZ>::Ptr transformedCloud(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::transformPointCloud(*cloud, *transformedCloud, transform);
+    // Create a rotation matrix to align this principal component with the X-axis
+    Eigen::Matrix3f rotation_matrix;
+    rotation_matrix = Eigen::AngleAxisf(atan2(eigen_vectors.col(principal_component_idx)(1), eigen_vectors.col(principal_component_idx)(0)), Eigen::Vector3f::UnitZ());
 
-    // Compute the axis-aligned bounding box on the transformed cloud
+    // Rotate the point cloud
+    pcl::PointCloud<pcl::PointXYZ>::Ptr rotated_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+    // Now transform the entire cloud
+    pcl::transformPointCloud(*cloud, *rotated_cloud, Eigen::Affine3f(rotation_matrix));
+
+    // Recompute the bounding box on the rotated cloud
     pcl::PointXYZ minPt, maxPt;
-    pcl::getMinMax3D(*transformedCloud, minPt, maxPt);
-    minPt.z = 0; // Set min Z to the origin level for visualization
+    pcl::getMinMax3D(*rotated_cloud, minPt, maxPt);
+    minPt.z = 10; // Set min Z to the origin level for visualization
 
     ClusterInfo info;
+    info.centroid = centroid;
     info.dimensions = Eigen::Vector3f(maxPt.x - minPt.x, maxPt.y - minPt.y, maxPt.z - minPt.z);
-    info.centroid = Eigen::Vector4f((minPt.x + maxPt.x) / 2, (minPt.y + maxPt.y) / 2, (minPt.z + maxPt.z) / 2, 1.0);
-    info.orientation = Eigen::Quaternionf(eigen_vectors);  // Use the computed quaternion
-    info.clusterId = clusters.size() + 1;  // Or any other identifier
+    Eigen::Quaternionf quat(rotation_matrix);
+    info.orientation = quat; // Store the orientation
+    info.clusterId = clusters.size() + 1;
+    info.eulerAngles = quat.toRotationMatrix().eulerAngles(2, 1, 0);
+    info.clusterSize = cloud->size();
 
     clusters.push_back(info);
+
+    //std::unique_ptr<ply_processor> processor = std::make_unique<ply_processor>();
+    //processor->visualizePointCloud(rotated_cloud);
+
+
     return clusters;
 
 }

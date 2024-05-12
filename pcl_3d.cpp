@@ -170,6 +170,8 @@ std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
         //segmentation->visualizePointCloud(transformed_cloud, cluster_indices);
     }
     else{
+        processor->visualizePointCloud(cloud);
+
         //Convert the reference point to pcl::PointXYZ
         pcl::PointXYZ referencePointXYZ(referencePoint.x(), referencePoint.y(), referencePoint.z());
         auto transformed_cloud = segmentation->transformCloud(cloud, referencePointXYZ);
