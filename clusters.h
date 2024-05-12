@@ -10,6 +10,7 @@ struct ClusterInfo {
     Eigen::Vector3f dimensions;
     Eigen::Vector3f eulerAngles;
     Eigen::Quaternionf orientation;
+    int clusterSize;
     int clusterId;
 };
 
