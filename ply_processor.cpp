@@ -139,17 +139,97 @@ void ply_processor::visualizePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr clou
     viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "cloud");
 
     // Add a coordinate system to the visualizer
-    viewer->addCoordinateSystem(1.0);
+    viewer->addCoordinateSystem(50.0);
     // Optionally, add labels to the axes
     viewer->addText3D("X", pcl::PointXYZ(1.1, 0, 0), 0.1, 1, 0, 0, "X_axis");
     viewer->addText3D("Y", pcl::PointXYZ(0, 1.1, 0), 0.1, 0, 1, 0, "Y_axis");
     viewer->addText3D("Z", pcl::PointXYZ(0, 0, 1.1), 0.1, 0, 0, 1, "Z_axis");
+    // Random number generation for colors
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, 255);
+    // Generate a random color for the cluster
+    int r = dis(gen);
+    int g = dis(gen);
+    int b = dis(gen);
+
+    // Get the bounding box points
+    pcl::PointXYZ minPt, maxPt;
+    pcl::getMinMax3D(*cloud, minPt, maxPt);
+    minPt.z = 0; // Set min Z to the origin level for visualization
+
+
+    // Define the 8 vertices of the bounding box
+    pcl::PointXYZ p1(minPt.x, minPt.y, minPt.z);
+    pcl::PointXYZ p2(minPt.x, maxPt.y, minPt.z);
+    pcl::PointXYZ p3(maxPt.x, maxPt.y, minPt.z);
+    pcl::PointXYZ p4(maxPt.x, minPt.y, minPt.z);
+    pcl::PointXYZ p5(minPt.x, minPt.y, maxPt.z);
+    pcl::PointXYZ p6(minPt.x, maxPt.y, maxPt.z);
+    pcl::PointXYZ p7(maxPt.x, maxPt.y, maxPt.z);
+    pcl::PointXYZ p8(maxPt.x, minPt.y, maxPt.z);
+
+    // Draw lines between the corners (edges) of the bounding box
+    viewer->addLine(p1, p2, r / 255.0, g / 255.0, b / 255.0, "line1_");
+    viewer->addLine(p2, p3, r / 255.0, g / 255.0, b / 255.0, "line2_");
+    viewer->addLine(p3, p4, r / 255.0, g / 255.0, b / 255.0, "line3_");
+    viewer->addLine(p4, p1, r / 255.0, g / 255.0, b / 255.0, "line4_");
+    viewer->addLine(p5, p6, r / 255.0, g / 255.0, b / 255.0, "line5_");
+    viewer->addLine(p6, p7, r / 255.0, g / 255.0, b / 255.0, "line6_");
+    viewer->addLine(p7, p8, r / 255.0, g / 255.0, b / 255.0, "line7_");
+    viewer->addLine(p8, p5, r / 255.0, g / 255.0, b / 255.0, "line8_");
+    viewer->addLine(p1, p5, r / 255.0, g / 255.0, b / 255.0, "line9_");
+    viewer->addLine(p2, p6, r / 255.0, g / 255.0, b / 255.0, "line10_");
+    viewer->addLine(p3, p7, r / 255.0, g / 255.0, b / 255.0, "line11_");
+    viewer->addLine(p4, p8, r / 255.0, g / 255.0, b / 255.0, "line12_");
+
 
     viewer->initCameraParameters();
 
     // Process events
     while (!viewer->wasStopped()) {
         viewer->spinOnce(100000); // Spin with a more reasonable delay
+    }
+}
+
+void ply_processor::visualizePointCloudV2(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud, Eigen::Vector4f centroid, Eigen::Matrix3f eigen_vectors) {
+    pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
+    viewer->setBackgroundColor(0, 0, 0);
+
+    // Visualize original cloud in white
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> white_color(cloud, 255, 255, 255);
+    viewer->addPointCloud<pcl::PointXYZ>(cloud, white_color, "original cloud");
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "original cloud");
+
+    // Visualize transformed cloud in red
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red_color(transformed_cloud, 255, 0, 0);
+    viewer->addPointCloud<pcl::PointXYZ>(transformed_cloud, red_color, "transformed cloud");
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "transformed cloud");
+
+    // Add a coordinate system to the visualizer
+    viewer->addCoordinateSystem(50.0);
+    // Optionally, add labels to the axes
+    viewer->addText3D("X", pcl::PointXYZ(1.1, 0, 0), 0.1, 1, 0, 0, "X_axis");
+    viewer->addText3D("Y", pcl::PointXYZ(0, 1.1, 0), 0.1, 0, 1, 0, "Y_axis");
+    viewer->addText3D("Z", pcl::PointXYZ(0, 0, 1.1), 0.1, 0, 0, 1, "Z_axis");
+
+    // Draw eigenvectors as arrows
+    pcl::PointXYZ origin;
+    origin.x = centroid[0];
+    origin.y = centroid[1];
+    origin.z = centroid[2];
+    pcl::PointXYZ end;
+    for (int i = 0; i < 3; ++i) {
+        end.x = origin.x + 0.1 * eigen_vectors(0, i); // Scale factor for visualization
+        end.y = origin.y + 0.1 * eigen_vectors(1, i);
+        end.z = origin.z + 0.1 * eigen_vectors(2, i);
+        std::string arrow_id = "eigen_vector_" + std::to_string(i);
+        viewer->addArrow(end, origin, 1.0, 0.0, 0.0, false, arrow_id);
+    }
+
+    // Spin until closed
+    while (!viewer->wasStopped()) {
+        viewer->spinOnce(100000);
     }
 }
 
