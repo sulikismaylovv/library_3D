@@ -26,7 +26,7 @@ std::vector<pcl::PointIndices> ply_segmentation::segmentAndExtractClusters(const
     int max_iterations = 10;
     int iterations = 0;
     int previous_size = static_cast<int>(cloud->size());
-    int delta_threshold = 25; // Minimum change in size to continue segmentation
+    int delta_threshold = 50; // Minimum change in size to continue segmentation
 
     while (iterations < max_iterations) {
         seg.setInputCloud(cloud);
@@ -77,8 +77,8 @@ std::vector<pcl::PointIndices> ply_segmentation::segmentAndExtractClusters(const
     // Max Cluster Size - the maximum number of points that a cluster needs to contain in order to be considered valid (useful for filtering noise)
     // For example , cluster tolerance of 11 means 11mm
     ec.setClusterTolerance(13.0);
-    ec.setMinClusterSize(500);
-    ec.setMaxClusterSize(25000);
+    ec.setMinClusterSize(750);
+    ec.setMaxClusterSize(20000);
     ec.setSearchMethod(tree);
     ec.setInputCloud(cloud);
     ec.extract(cluster_indices);

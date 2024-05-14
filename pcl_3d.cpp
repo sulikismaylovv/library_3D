@@ -149,8 +149,23 @@ std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
             return {};
         }
 
+        //Optional, statistical outlier removal
+        if (!processor->removeOutliers(*isolated_pcl, 5, 1.7)) { // Example meanK and stddevMulThresh
+            std::cerr << "Removing outliers failed." << std::endl;
+            throw std::runtime_error("Removing outliers failed.");
+        }
+
         // Step 6: Segment and Extract Clusters
         auto cluster_indices = segmentation->segmentAndExtractClusters(isolated_pcl);
+
+        // // Additional step perform outlier removal on clusers
+        // for (auto& cluster : cluster_indices) {
+        //     auto cluster_cloud = segmentation->extractCluster(isolated_pcl, cluster);
+        //     if (!processor->removeOutliers(*cluster_cloud, 0.05f, 150)) { // Example meanK and stddevMulThresh
+        //         std::cerr << "Removing outliers failed." << std::endl;
+        //         throw std::runtime_error("Removing outliers failed.");
+        //     }
+        // }
 
         // Step 7: Transform the point cloud to align with the specified reference point
         pcl::PointXYZ referencePointXYZ(referencePoint.x(), referencePoint.y(), referencePoint.z());
@@ -170,11 +185,33 @@ std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
         //segmentation->visualizePointCloud(transformed_cloud, cluster_indices);
     }
     else{
-        processor->visualizePointCloud(cloud);
+        //processor->visualizePointCloud(cloud);
+        //Step 3: Load the point cloud with the tray
+        auto cloudTrayOpt = processor->loadCloud(filePathTray);
+        if (!cloudTrayOpt) {
+            std::cerr << "Failed to read point cloud." << std::endl;
+            throw std::runtime_error("Failed to read point cloud.");
+        }
+
+        auto cloudTray = cloudTrayOpt.value(); // Dereference std::optional
+
+        // Step 4: Apply PassThrough Filter
+        if (!processor->applyPassthroughFilter(*cloudTray, minPt, maxPt)) {
+            std::cerr << "Applying PassThrough filter failed." << std::endl;
+            throw std::runtime_error("Applying PassThrough filter failed.");
+        }
+
+
+        // Step 5: Subtract the tray from the object
+        auto isolated_pcl = segmentation->subtractPointClouds(cloud, cloudTray, 40.0f);
+        if (isolated_pcl->size() == 0) {
+            std::cerr << "Subtracting point clouds failed.(no boxes)" << std::endl;
+            return {};
+        }
 
         //Convert the reference point to pcl::PointXYZ
         pcl::PointXYZ referencePointXYZ(referencePoint.x(), referencePoint.y(), referencePoint.z());
-        auto transformed_cloud = segmentation->transformCloud(cloud, referencePointXYZ);
+        auto transformed_cloud = segmentation->transformCloud(isolated_pcl, referencePointXYZ);
 
         //Step 8:Invert the point cloud
         if (!processor->invertPointCloud(*transformed_cloud)) {
