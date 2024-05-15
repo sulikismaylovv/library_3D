@@ -182,7 +182,7 @@ std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
 
 
         // Step 10: Visualize the results
-        segmentation->visualizePointCloud(transformed_cloud, cluster_indices);
+        //segmentation->visualizePointCloud(transformed_cloud, cluster_indices);
     }
     else{
         //processor->visualizePointCloud(cloud);
