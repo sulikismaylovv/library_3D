@@ -149,11 +149,11 @@ std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
             return {};
         }
 
-        //Optional, statistical outlier removal
-        if (!processor->removeOutliers(*isolated_pcl, 5, 1.7)) { // Example meanK and stddevMulThresh
-            std::cerr << "Removing outliers failed." << std::endl;
-            throw std::runtime_error("Removing outliers failed.");
-        }
+        // //Optional, statistical outlier removal
+        // if (!processor->removeOutliers(*isolated_pcl, 5, 1.7)) { // Example meanK and stddevMulThresh
+        //     std::cerr << "Removing outliers failed." << std::endl;
+        //     throw std::runtime_error("Removing outliers failed.");
+        // }
 
         // Step 6: Segment and Extract Clusters
         auto cluster_indices = segmentation->segmentAndExtractClusters(isolated_pcl);
@@ -182,7 +182,7 @@ std::vector<ClusterInfo> PCL_3D::findBoundingBox(const std::string& filePathBox,
 
 
         // Step 10: Visualize the results
-        //segmentation->visualizePointCloud(transformed_cloud, cluster_indices);
+        segmentation->visualizePointCloud(transformed_cloud, cluster_indices);
     }
     else{
         //processor->visualizePointCloud(cloud);
