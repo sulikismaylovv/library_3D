@@ -26,7 +26,7 @@ std::vector<pcl::PointIndices> ply_segmentation::segmentAndExtractClusters(const
     int max_iterations = 10;
     int iterations = 0;
     int previous_size = static_cast<int>(cloud->size());
-    int delta_threshold = 25; // Minimum change in size to continue segmentation
+    int delta_threshold = 50; // Minimum change in size to continue segmentation
 
     while (iterations < max_iterations) {
         seg.setInputCloud(cloud);
@@ -77,8 +77,8 @@ std::vector<pcl::PointIndices> ply_segmentation::segmentAndExtractClusters(const
     // Max Cluster Size - the maximum number of points that a cluster needs to contain in order to be considered valid (useful for filtering noise)
     // For example , cluster tolerance of 11 means 11mm
     ec.setClusterTolerance(13.0);
-    ec.setMinClusterSize(500);
-    ec.setMaxClusterSize(25000);
+    ec.setMinClusterSize(750);
+    ec.setMaxClusterSize(20000);
     ec.setSearchMethod(tree);
     ec.setInputCloud(cloud);
     ec.extract(cluster_indices);
@@ -315,14 +315,14 @@ std::vector<ClusterInfo> ply_segmentation::extractLocations(const pcl::PointClou
         Eigen::Quaternionf quat(rotation_matrix);
         info.orientation = quat; // Store the orientation
         info.clusterId = clusters.size() + 1;
-        info.centroid = centroid;
         info.eulerAngles = quat.toRotationMatrix().eulerAngles(2, 1, 0);
+        info.clusterSize = cluster_cloud->size();
 
         clusters.push_back(info);
 
 
         // Enhanced visualization to check alignments
-        std::unique_ptr<ply_processor> processor = std::make_unique<ply_processor>();
+        //std::unique_ptr<ply_processor> processor = std::make_unique<ply_processor>();
         //processor->visualizePointCloud(rotated_cloud);
         //processor->visualizePointCloudV2(cluster_cloud, rotated_cloud, centroid, eigen_vectors);
     }
@@ -424,10 +424,14 @@ std::vector<ClusterInfo> ply_segmentation::extractLocationsCloud(const pcl::Poin
     Eigen::Quaternionf quat(rotation_matrix);
     info.orientation = quat; // Store the orientation
     info.clusterId = clusters.size() + 1;
-    info.centroid = centroid;
     info.eulerAngles = quat.toRotationMatrix().eulerAngles(2, 1, 0);
+    info.clusterSize = cloud->size();
 
     clusters.push_back(info);
+
+    //std::unique_ptr<ply_processor> processor = std::make_unique<ply_processor>();
+    //processor->visualizePointCloud(rotated_cloud);
+
 
     return clusters;
 
